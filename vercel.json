@@ -1,0 +1,14 @@
+{
+  "cleanUrls": false,
+  "headers": [
+    {
+      "source": "/probes/(.*).mjs",
+      "headers": [
+        { "key": "Content-Type", "value": "text/javascript; charset=utf-8" }
+      ]
+    }
+  ],
+  "redirects": [
+    { "source": "/", "destination": "/probes/index.html", "permanent": false }
+  ]
+}

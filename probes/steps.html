@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test 2 — Step counter</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<a class="back" href="index.html">&larr; All tests</a>
+<h1>Test 2 — Step counter</h1>
+<p class="sub">Walk 100 steps counting out loud, enter the real number, read the error. Under 5% passes.</p>
+
+<button id="start">Enable sensors</button>
+
+<div class="card center">
+  <div class="big" id="count">0</div>
+  <div class="hint">steps detected &middot; <span id="dist">0.0</span> m at <span id="strideOut">0.70</span> m stride</div>
+</div>
+
+<button id="reset" class="secondary">Reset counter</button>
+
+<h2>Accuracy</h2>
+<div class="card">
+  <label for="truth">Steps you actually took</label>
+  <input type="number" id="truth" inputmode="numeric" placeholder="100">
+  <div class="row" style="margin-top:14px"><span class="k">Error</span><span class="v" id="err">—</span></div>
+  <div class="hint" id="advice">Under 5% is good. Over 10% means retune.</div>
+</div>
+
+<h2>Live signal</h2>
+<div class="card">
+  <canvas id="plot" width="700" height="150" style="height:150px"></canvas>
+  <div class="row" style="margin-top:8px"><span class="k">filtered magnitude</span><span class="v" id="filt">—</span></div>
+  <div class="hint">Blue = smoothed acceleration. Red dots = detected steps. Dashed lines are your
+    thresholds. You want <b>one dot per stride</b>, evenly spaced — not clusters, not gaps.</div>
+</div>
+
+<h2>Tuning</h2>
+<div class="card">
+  <label>Peak threshold — <span class="mono" id="hiOut">11.0</span> m/s²</label>
+  <input type="range" id="hi" min="10.2" max="14" step="0.1" value="11">
+  <label>Re-arm threshold — <span class="mono" id="loOut">9.9</span> m/s²</label>
+  <input type="range" id="lo" min="8.5" max="10.1" step="0.1" value="9.9">
+  <label>Min gap between steps — <span class="mono" id="gapOut">280</span> ms</label>
+  <input type="range" id="gap" min="150" max="500" step="10" value="280">
+  <label>Smoothing — <span class="mono" id="alOut">0.25</span></label>
+  <input type="range" id="al" min="0.05" max="0.6" step="0.05" value="0.25">
+  <label>Stride length — <span class="mono" id="strideIn">0.70</span> m</label>
+  <input type="range" id="stride" min="0.4" max="1" step="0.01" value="0.7">
+  <div class="hint">Note the winning numbers down. They go straight into the real app.</div>
+</div>
+
+<h2>Run these separately</h2>
+<div class="card">
+  <div class="hint">
+    <b>1.</b> 100 steps, normal pace, phone flat in hand<br>
+    <b>2.</b> 100 steps slowly, like you're reading the screen<br>
+    <b>3.</b> One flight of stairs, up then down<br>
+    <b>4.</b> 100 steps with the phone in your pocket<br><br>
+    Run 4 is <b>expected to fail</b>. That's the finding: the app has to require a
+    hands-out posture and notice when the phone gets pocketed.
+  </div>
+</div>
+
+<script type="module">
+import { StepDetector } from './core.mjs';
+import { $, fmt, onStart, slider } from './ui.mjs';
+
+const det = new StepDetector();
+let stride = 0.7;
+
+slider('hi', 'hiOut', (v) => det.high = v, 1);
+slider('lo', 'loOut', (v) => det.low = v, 1);
+slider('gap', 'gapOut', (v) => det.minGapMs = v, 0);
+slider('al', 'alOut', (v) => det.alpha = v, 2);
+slider('stride', 'strideIn', (v) => { stride = v; $('strideOut').textContent = v.toFixed(2); }, 2);
+
+const cv = $('plot');
+const ctx = cv.getContext('2d');
+const hist = [];
+const marks = [];
+const CAP = 320;
+
+function draw() {
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  const lo = 7, hi = 16;
+  const y = (v) => H - ((v - lo) / (hi - lo)) * H;
+  const x = (i) => (i / Math.max(1, CAP - 1)) * W;
+
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#d4d4d8';
+  ctx.lineWidth = 1;
+  for (const t of [det.high, det.low]) {
+    ctx.beginPath(); ctx.moveTo(0, y(t)); ctx.lineTo(W, y(t)); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  if (hist.length > 1) {
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    hist.forEach((v, i) => (i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v))));
+    ctx.stroke();
+
+    ctx.fillStyle = '#dc2626';
+    for (const i of marks) {
+      if (i < 0 || i >= hist.length) continue;
+      ctx.beginPath(); ctx.arc(x(i), y(hist[i]), 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+
+function checkErr() {
+  const t = parseFloat($('truth').value);
+  if (!t || t <= 0) { $('err').textContent = '—'; $('err').className = 'v'; return; }
+  const pct = ((det.steps - t) / t) * 100;
+  const a = Math.abs(pct);
+  $('err').textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+  $('err').className = 'v ' + (a <= 5 ? 'good' : a <= 10 ? 'warn' : 'bad');
+  $('advice').textContent = a <= 5 ? 'Good. Write these settings down.'
+    : a <= 10 ? 'Usable, but worth another pass.'
+    : det.steps > t ? 'Over-counting — raise the peak threshold or the min gap.'
+    : 'Under-counting — lower the peak threshold.';
+  $('advice').className = 'hint ' + (a <= 5 ? 'good' : a <= 10 ? 'warn' : 'bad');
+}
+$('truth').addEventListener('input', checkErr);
+
+$('reset').addEventListener('click', () => {
+  det.reset(); hist.length = 0; marks.length = 0;
+  $('count').textContent = '0'; $('dist').textContent = '0.0';
+  checkErr(); draw();
+});
+
+onStart('start', () => {
+  window.addEventListener('devicemotion', (e) => {
+    const a = e.accelerationIncludingGravity || {};
+    const fired = det.push(a.x, a.y, a.z, e.timeStamp);
+
+    hist.push(det.filtered);
+    if (fired) marks.push(hist.length - 1);
+    if (hist.length > CAP) {
+      hist.shift();
+      for (let i = marks.length - 1; i >= 0; i--) {
+        if (--marks[i] < 0) marks.splice(i, 1);
+      }
+    }
+
+    $('count').textContent = det.steps;
+    $('dist').textContent = (det.steps * stride).toFixed(1);
+    $('filt').textContent = fmt(det.filtered);
+    checkErr();
+    draw();
+  });
+});
+
+draw();
+</script>
+</body>
+</html>

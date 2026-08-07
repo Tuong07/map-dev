@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sensor tests</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<h1>Sensor tests</h1>
+<p class="sub">Phase 0. Each page answers one question. None of this ships — only the tuned numbers do.</p>
+
+<nav>
+  <a href="sensors.html"><span class="t">1 · Raw sensors</span><span class="d">Can the phone read motion at all, and how fast?</span></a>
+  <a href="steps.html"><span class="t">2 · Step counter</span><span class="d">Does it count my steps within 5%?</span></a>
+  <a href="turns.html"><span class="t">3 · Turn detector</span><span class="d">Does it know left from right?</span></a>
+  <a href="qr.html"><span class="t">4 · QR scan timer</span><span class="d">Do codes scan fast in a dim hallway?</span></a>
+  <a href="graph.html"><span class="t">5 · Fake corridor</span><span class="d">Does the dot follow me? Go / no-go.</span></a>
+  <a href="record.html"><span class="t">R · Recorder</span><span class="d">Log a walk to a file so tuning happens at a desk.</span></a>
+</nav>
+
+<h2>Order</h2>
+<div class="card">
+  <div class="hint">
+    Run <b>1</b> at your desk first — if it fails, nothing else matters.<br><br>
+    Then use the <b>recorder</b> for one walk before tuning anything. Tests 2 and 3 can be
+    replayed from that file with <code>analyze.mjs</code> instead of walking again.<br><br>
+    <b>4</b> and <b>5</b> need to happen in Wheatley itself.
+  </div>
+</div>
+
+<h2>Posture</h2>
+<div class="card">
+  <div class="hint">
+    Hold the phone <b>flat, screen up</b>, like you're following directions. Yaw only equals
+    your walking direction in that posture. In a pocket or swinging at your side, the
+    numbers are meaningless — that's a known limit, not a bug.
+  </div>
+</div>
+</body>
+</html>

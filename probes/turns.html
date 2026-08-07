@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test 3 — Turn detector</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<a class="back" href="index.html">&larr; All tests</a>
+<h1>Test 3 — Turn detector</h1>
+<p class="sub">Only one thing matters: it must never say left when you turned right. Exact angles don't.</p>
+
+<button id="start">Enable sensors</button>
+
+<h2>Step 1 · Measure drift</h2>
+<div class="card">
+  <div class="hint">Lay the phone <b>flat and completely still</b>, then start. It measures how fast
+    the gyro lies when nothing is moving, and subtracts it from here on.</div>
+  <button id="cal" class="secondary" style="margin-top:10px">Calibrate — 10 s</button>
+  <div class="row"><span class="k">measured bias</span><span class="v" id="bias">not measured</span></div>
+  <div class="row"><span class="k">drift if left alone</span><span class="v" id="driftMin">—</span></div>
+</div>
+
+<h2>Step 2 · Walk a loop</h2>
+<div class="card center">
+  <div class="big" id="total">0°</div>
+  <div class="hint">total turned &middot; a closed loop should land near <b>±360°</b></div>
+</div>
+
+<div class="card">
+  <div class="row"><span class="k">turns detected</span><span class="v" id="nTurns">0</span></div>
+  <div class="row"><span class="k">live yaw</span><span class="v" id="yaw">0°</span></div>
+  <div class="row"><span class="k">rotation rate</span><span class="v" id="rate">0 °/s</span></div>
+</div>
+
+<ul class="log" id="log"></ul>
+
+<button id="reset" class="secondary" style="margin-top:12px">Reset walk</button>
+
+<h2>Tuning</h2>
+<div class="card">
+  <label>Counts as a turn above — <span class="mono" id="thOut">60</span>°</label>
+  <input type="range" id="th" min="30" max="100" step="5" value="60">
+  <label>Must settle for — <span class="mono" id="stOut">400</span> ms</label>
+  <input type="range" id="st" min="150" max="900" step="50" value="400">
+  <label>Counts as rotating above — <span class="mono" id="mvOut">25</span> °/s</label>
+  <input type="range" id="mv" min="10" max="60" step="5" value="25">
+</div>
+
+<h2>What passes</h2>
+<div class="card">
+  <div class="hint">
+    Walk a rectangle that returns you to where you started, holding the phone flat.<br><br>
+    <b>Pass:</b> 4 turns detected, every direction correct, total within about ±30° of 360.<br>
+    <b>Fail:</b> a missed turn, or any direction reported backwards.<br><br>
+    Being off by 20° on an individual angle is fine — the real app snaps heading to the
+    hallway's true bearing at every junction, so small errors get wiped out.
+  </div>
+</div>
+
+<script type="module">
+import { TurnTracker } from './core.mjs';
+import { $, fmt, onStart, slider } from './ui.mjs';
+
+const tt = new TurnTracker();
+slider('th', 'thOut', (v) => tt.turnThresholdDeg = v, 0);
+slider('st', 'stOut', (v) => tt.settleMs = v, 0);
+slider('mv', 'mvOut', (v) => tt.moveRateDeg = v, 0);
+
+let calibrating = false, calSum = 0, calN = 0, calUntil = 0;
+let last = 0;
+
+$('cal').addEventListener('click', () => {
+  calibrating = true; calSum = 0; calN = 0;
+  calUntil = performance.now() + 10000;
+  tt.bias = 0;
+  $('cal').textContent = 'Hold still…';
+  $('cal').disabled = true;
+});
+
+$('reset').addEventListener('click', () => {
+  tt.reset();
+  $('log').innerHTML = '';
+  $('nTurns').textContent = '0';
+  $('total').textContent = '0°';
+});
+
+onStart('start', () => {
+  window.addEventListener('devicemotion', (e) => {
+    const r = e.rotationRate || {};
+    const raw = r.alpha || 0;
+    const now = e.timeStamp;
+    const dt = last ? Math.min((now - last) / 1000, 0.1) : (e.interval || 16) / 1000;
+    last = now;
+
+    if (calibrating) {
+      calSum += raw; calN++;
+      if (performance.now() >= calUntil) {
+        calibrating = false;
+        tt.bias = calN ? calSum / calN : 0;
+        $('bias').textContent = fmt(tt.bias, 3) + ' °/s';
+        $('driftMin').textContent = fmt(Math.abs(tt.bias) * 60, 1) + '° per minute';
+        $('driftMin').className = 'v ' + (Math.abs(tt.bias) * 60 < 30 ? 'good' : 'warn');
+        $('cal').textContent = 'Recalibrate';
+        $('cal').disabled = false;
+        tt.reset();
+      }
+      return;
+    }
+
+    const turn = tt.push(raw, dt, now);
+    if (turn) {
+      const li = document.createElement('li');
+      li.innerHTML = `<span>turn ${tt.turns.length}</span>` +
+        `<span class="${turn.dir === 'L' ? 'warn' : ''}">${turn.dir === 'L' ? 'left' : 'right'} ${Math.abs(turn.deg)}°</span>`;
+      $('log').prepend(li);
+      $('nTurns').textContent = tt.turns.length;
+    }
+
+    $('yaw').textContent = fmt(tt.yaw, 0) + '°';
+    $('rate').textContent = fmt(raw - tt.bias, 1) + ' °/s';
+
+    const sum = tt.turns.reduce((a, t) => a + t.deg, 0);
+    $('total').textContent = (sum >= 0 ? '' : '−') + Math.abs(Math.round(sum)) + '°';
+    const near = Math.abs(Math.abs(sum) - 360) <= 30;
+    $('total').className = 'big ' + (tt.turns.length >= 4 ? (near ? 'good' : 'warn') : '');
+  });
+});
+</script>
+</body>
+</html>

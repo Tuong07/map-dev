@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test 4 — QR scan timer</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<a class="back" href="index.html">&larr; All tests</a>
+<h1>Test 4 — QR scan timer</h1>
+<p class="sub">Do this in Wheatley, in the real lighting. Your room is brighter than a hallway.</p>
+
+<button id="start">Start camera</button>
+
+<div class="card">
+  <video id="v" playsinline muted></video>
+</div>
+
+<div class="card center">
+  <div class="big" id="ms">—</div>
+  <div class="hint">time to decode &middot; under <b>2 s</b> passes</div>
+</div>
+
+<div class="card">
+  <div class="row"><span class="k">decoded</span><span class="v" id="payload">—</span></div>
+  <div class="row"><span class="k">decoder</span><span class="v" id="engine">—</span></div>
+  <div class="row"><span class="k">scans this session</span><span class="v" id="n">0</span></div>
+  <div class="row"><span class="k">best / worst</span><span class="v" id="bw">—</span></div>
+</div>
+
+<button id="again" class="secondary">Reset timer for next scan</button>
+
+<h2>Test matrix</h2>
+<div class="card">
+  <div class="hint">
+    Print the same code at <b>5 cm</b>, <b>10 cm</b>, and <b>15 cm</b>. For each size, try:<br><br>
+    &middot; straight on at 1 m<br>
+    &middot; at roughly 45°<br>
+    &middot; from 2 m<br>
+    &middot; walking past without stopping<br><br>
+    The smallest size that decodes in under 2 s from 1 m at 45° is the one you print
+    fifteen of. Getting this wrong means re-taping every sticker later.
+  </div>
+</div>
+
+<h2>Payload format</h2>
+<div class="card">
+  <div class="hint">Keep it short — fewer characters means a coarser, easier-to-read code.
+    Encode only an anchor id like <code>W2-J07</code>, not a full URL.</div>
+</div>
+
+<script src="vendor/jsQR.min.js"></script>
+<script type="module">
+import { $, keepAwake } from './ui.mjs';
+
+const video = $('v');
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+let armedAt = 0, times = [], detector = null, running = false;
+
+$('again').addEventListener('click', () => {
+  armedAt = performance.now();
+  $('ms').textContent = '…';
+  $('payload').textContent = '—';
+});
+
+$('start').addEventListener('click', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 } },
+    });
+    video.srcObject = stream;
+    await video.play();
+  } catch (err) {
+    $('start').textContent = 'Camera blocked: ' + err.name;
+    $('start').className = 'bad-btn';
+    return;
+  }
+
+  keepAwake();
+  $('start').textContent = 'Camera running';
+  $('start').className = 'secondary';
+  $('start').disabled = true;
+
+  if ('BarcodeDetector' in window) {
+    try {
+      detector = new BarcodeDetector({ formats: ['qr_code'] });
+      $('engine').textContent = 'BarcodeDetector (native)';
+    } catch { detector = null; }
+  }
+  if (!detector) $('engine').textContent = window.jsQR ? 'jsQR' : 'none available';
+
+  armedAt = performance.now();
+  running = true;
+  loop();
+});
+
+function record(text) {
+  const dt = performance.now() - armedAt;
+  times.push(dt);
+  $('ms').textContent = (dt / 1000).toFixed(2) + ' s';
+  $('ms').className = 'big ' + (dt < 2000 ? 'good' : 'bad');
+  $('payload').textContent = text.slice(0, 32);
+  $('n').textContent = times.length;
+  $('bw').textContent =
+    (Math.min(...times) / 1000).toFixed(2) + ' / ' + (Math.max(...times) / 1000).toFixed(2) + ' s';
+  armedAt = performance.now();
+}
+
+async function loop() {
+  if (!running) return;
+  if (video.readyState >= 2) {
+    const w = video.videoWidth, h = video.videoHeight;
+    if (w && h) {
+      if (detector) {
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length) record(codes[0].rawValue || '(empty)');
+        } catch { /* transient */ }
+      } else if (window.jsQR) {
+        const scale = 640 / Math.max(w, h);
+        canvas.width = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window.jsQR(img.data, img.width, img.height);
+        if (code) record(code.data || '(empty)');
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>

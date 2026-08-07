@@ -1,0 +1,10 @@
+.DS_Store
+node_modules/
+.next/
+out/
+dist/
+.env
+.env.*
+.vercel
+.claude/
+probes/recordings/*.json

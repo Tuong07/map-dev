@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test 5 — Fake corridor</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<a class="back" href="index.html">&larr; All tests</a>
+<h1>Test 5 — Fake corridor</h1>
+<p class="sub">The go/no-go. Everything wired together on a hardcoded L-shape. No map, no database.</p>
+
+<button id="start">Enable sensors</button>
+
+<div class="card">
+  <canvas id="map" width="700" height="480" style="height:300px"></canvas>
+</div>
+
+<div class="card">
+  <div class="row"><span class="k">walked</span><span class="v" id="walked">0.0 m</span></div>
+  <div class="row"><span class="k">steps</span><span class="v" id="steps">0</span></div>
+  <div class="row"><span class="k">on segment</span><span class="v" id="seg">—</span></div>
+  <div class="row"><span class="k">drift circle</span><span class="v" id="drift">—</span></div>
+</div>
+
+<button id="anchor" class="secondary">Anchor at start (simulates a QR scan)</button>
+
+<h2>Score the run</h2>
+<div class="card">
+  <div class="hint">Walk to the far end of the second corridor, stop exactly on the end point,
+    then tap below. It compares where the app thinks you are against where you actually are.</div>
+  <button id="score" class="secondary" style="margin-top:10px">I'm standing at the end</button>
+  <div class="row"><span class="k">true error</span><span class="v" id="err">—</span></div>
+  <div class="hint" id="advice">Under 5 m passes. The drift circle should also roughly cover the true error.</div>
+</div>
+
+<h2>Set up the corridor</h2>
+<div class="card">
+  <label>First corridor length — <span class="mono" id="l1Out">30</span> m</label>
+  <input type="range" id="l1" min="10" max="80" step="1" value="30">
+  <label>Second corridor length — <span class="mono" id="l2Out">20</span> m</label>
+  <input type="range" id="l2" min="10" max="80" step="1" value="20">
+  <label>Turn direction</label>
+  <select id="dir" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff">
+    <option value="right">Right</option>
+    <option value="left">Left</option>
+  </select>
+  <label>Stride length — <span class="mono" id="strideOut">0.70</span> m</label>
+  <input type="range" id="stride" min="0.4" max="1" step="0.01" value="0.7">
+  <div class="hint">Pace out a real hallway with one corner and match these numbers to it.
+    Use the stride you settled on in Test 2.</div>
+</div>
+
+<h2>What passes</h2>
+<div class="card">
+  <div class="hint">
+    <b>Pass:</b> the dot ends within <b>5 m</b> of the true end point, and it took the corner
+    at roughly the right place.<br><br>
+    <b>Also matters:</b> the drift circle should be about the size of the real error. A dot
+    that is wrong but honest about it is fine — the app asks for a rescan. A dot that is
+    wrong and confident is the dangerous case.<br><br>
+    If this fails, we drop the live dot and ship a searchable map with written directions.
+    That's still better than what exists today.
+  </div>
+</div>
+
+<script type="module">
+import { StepDetector, TurnTracker, GraphTracker, driftRadius, dist } from './core.mjs';
+import { $, fmt, onStart, slider } from './ui.mjs';
+
+let L1 = 30, L2 = 20, turnDir = 'right', stride = 0.7;
+let graph, fix, nodes;
+
+// Declared before the sliders below, because wiring a slider fires its callback
+// once immediately -- and that callback draws.
+const cv = $('map');
+const ctx = cv.getContext('2d');
+const det = new StepDetector();
+const tt = new TurnTracker();
+
+function build() {
+  const sign = turnDir === 'right' ? 1 : -1;
+  nodes = {
+    A: { x: 0, y: 0 },
+    B: { x: 0, y: L1 },
+    C: { x: sign * L2, y: L1 },
+  };
+  graph = new GraphTracker(nodes, [
+    { id: 'AB', from: 'A', to: 'B' },
+    { id: 'BC', from: 'B', to: 'C' },
+  ]);
+  fix = graph.anchor('AB', 0);
+  det.reset();
+  tt.reset();
+  draw();
+  update();
+}
+
+slider('l1', 'l1Out', (v) => { L1 = v; build(); }, 0);
+slider('l2', 'l2Out', (v) => { L2 = v; build(); }, 0);
+slider('stride', 'strideOut', (v) => { stride = v; }, 2);
+$('dir').addEventListener('change', (e) => { turnDir = e.target.value; build(); });
+$('anchor').addEventListener('click', () => { fix = graph.anchor('AB', 0); update(); draw(); });
+
+function draw() {
+  const W = cv.width, H = cv.height, pad = 50;
+  ctx.clearRect(0, 0, W, H);
+
+  const xs = Object.values(nodes).map((n) => n.x);
+  const ys = Object.values(nodes).map((n) => n.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const scale = Math.min((W - pad * 2) / Math.max(1, maxX - minX), (H - pad * 2) / Math.max(1, maxY - minY));
+  const px = (p) => ({
+    x: pad + (p.x - minX) * scale,
+    y: H - pad - (p.y - minY) * scale,
+  });
+
+  ctx.strokeStyle = '#d4d4d8';
+  ctx.lineWidth = 30;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  const a = px(nodes.A), b = px(nodes.B), c = px(nodes.C);
+  ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y);
+  ctx.stroke();
+
+  ctx.fillStyle = '#71717a';
+  ctx.font = '600 15px -apple-system, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('start', a.x, a.y + 34);
+  ctx.fillText('end', c.x, c.y - 24);
+
+  if (!fix) return;
+  const p = px(graph.toXY(fix));
+  const r = driftRadius(fix.metersSinceAnchor) * scale;
+
+  ctx.fillStyle = 'rgba(37,99,235,0.18)';
+  ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(r, 8), 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2563eb';
+  ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+}
+
+function update() {
+  if (!fix) return;
+  $('walked').textContent = fix.metersTotal.toFixed(1) + ' m';
+  $('steps').textContent = det.steps;
+  $('seg').textContent = fix.edgeId === 'AB' ? 'first corridor' : 'second corridor';
+  $('drift').textContent = driftRadius(fix.metersSinceAnchor).toFixed(1) + ' m';
+}
+
+$('score').addEventListener('click', () => {
+  if (!fix) return;
+  const here = graph.toXY(fix);
+  const e = dist(here, nodes.C);
+  $('err').textContent = e.toFixed(1) + ' m';
+  $('err').className = 'v ' + (e <= 5 ? 'good' : e <= 10 ? 'warn' : 'bad');
+  const circle = driftRadius(fix.metersSinceAnchor);
+  $('advice').textContent = e <= 5
+    ? (circle >= e ? 'Pass — and the drift circle covered the error. This is the result we want.'
+                   : 'Pass on distance, but the drift circle under-reported. Raise the drift rate.')
+    : e <= 10 ? 'Marginal. Check whether the turn was detected at the right place.'
+    : 'Fail. Check Test 2 and Test 3 individually before blaming this page.';
+  $('advice').className = 'hint ' + (e <= 5 ? 'good' : e <= 10 ? 'warn' : 'bad');
+});
+
+let last = 0;
+// Gyro yaw is relative, so we remember what it read when we last snapped to a
+// corridor. Heading is then that corridor's true bearing plus whatever we've
+// turned since -- which is why gyro drift never survives a junction.
+let yawRef = 0;
+
+onStart('start', () => {
+  window.addEventListener('devicemotion', (e) => {
+    const a = e.accelerationIncludingGravity || {};
+    const r = e.rotationRate || {};
+    const now = e.timeStamp;
+    const dt = last ? Math.min((now - last) / 1000, 0.1) : (e.interval || 16) / 1000;
+    last = now;
+
+    tt.push(r.alpha, dt, now);
+
+    if (det.push(a.x, a.y, a.z, now)) {
+      const before = fix.edgeId;
+      const heading = graph.edgeBearing(before) - (tt.yaw - yawRef);
+      graph.step(fix, stride, heading);
+      if (fix.edgeId !== before) yawRef = tt.yaw;
+      update();
+      draw();
+    }
+  });
+});
+
+build();
+</script>
+</body>
+</html>

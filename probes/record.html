@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recorder</title>
+<link rel="stylesheet" href="common.css">
+</head>
+<body>
+<a class="back" href="index.html">&larr; All tests</a>
+<h1>Recorder</h1>
+<p class="sub">Walk once, tune fifty times. This is what stops you re-walking Wheatley for every parameter change.</p>
+
+<button id="start">Enable sensors</button>
+
+<div class="card center">
+  <div class="big" id="clock">00:00</div>
+  <div class="hint"><span id="n">0</span> samples &middot; <span id="hz">—</span></div>
+</div>
+
+<button id="mark" class="secondary" disabled>Mark corner</button>
+<button id="stop" disabled>Stop and download</button>
+
+<h2>Before you walk</h2>
+<div class="card">
+  <label for="label">Name this walk</label>
+  <input type="text" id="label" value="walk-01" autocapitalize="off" autocorrect="off">
+  <label for="truth">Steps you'll count out loud (optional)</label>
+  <input type="number" id="truth" inputmode="numeric" placeholder="100">
+  <div class="hint">Both get written into the file so <code>analyze.mjs</code> can score itself
+    against ground truth without you remembering anything later.</div>
+</div>
+
+<h2>Marks</h2>
+<ul class="log" id="log"></ul>
+
+<h2>How to use it</h2>
+<div class="card">
+  <div class="hint">
+    <b>1.</b> Name the walk, hit start.<br>
+    <b>2.</b> Hold the phone flat and walk your route, counting steps out loud.<br>
+    <b>3.</b> Tap <b>Mark corner</b> the moment you turn.<br>
+    <b>4.</b> Stop, download, AirDrop the file to your Mac.<br>
+    <b>5.</b> <code>node probes/analyze.mjs walk-01.json</code><br><br>
+    Once the page has loaded, it keeps working with no signal — safe in basements and
+    stairwells. Just don't reload down there.
+  </div>
+</div>
+
+<script type="module">
+import { $, fmt, onStart, RateMeter } from './ui.mjs';
+
+const samples = [];
+const marks = [];
+const rate = new RateMeter();
+let t0 = 0, running = false;
+
+function tick() {
+  if (!running) return;
+  const s = (performance.now() - t0) / 1000;
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  $('clock').textContent = String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  $('n').textContent = samples.length.toLocaleString();
+  $('hz').textContent = rate.hz ? fmt(rate.hz, 0) + ' Hz' : '—';
+  requestAnimationFrame(tick);
+}
+
+$('mark').addEventListener('click', () => {
+  if (!running) return;
+  const at = performance.now() - t0;
+  marks.push({ at, index: samples.length });
+  const li = document.createElement('li');
+  const s = at / 1000;
+  li.innerHTML = `<span>corner ${marks.length}</span><span>${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}</span>`;
+  $('log').prepend(li);
+});
+
+$('stop').addEventListener('click', () => {
+  running = false;
+  const name = ($('label').value || 'walk').replace(/[^a-z0-9-_]/gi, '') || 'walk';
+  const payload = {
+    label: name,
+    recordedAt: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    durationMs: samples.length ? samples[samples.length - 1].t : 0,
+    groundTruthSteps: parseFloat($('truth').value) || null,
+    marks,
+    samples,
+  };
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  $('stop').textContent = 'Downloaded — reload to record again';
+  $('stop').disabled = true;
+  $('mark').disabled = true;
+});
+
+onStart('start', () => {
+  t0 = performance.now();
+  running = true;
+  $('mark').disabled = false;
+  $('stop').disabled = false;
+  tick();
+
+  let heading = null;
+  window.addEventListener('deviceorientation', (e) => {
+    heading = e.webkitCompassHeading != null ? e.webkitCompassHeading : e.alpha;
+  });
+
+  window.addEventListener('devicemotion', (e) => {
+    if (!running) return;
+    rate.tick();
+    const a = e.accelerationIncludingGravity || {};
+    const r = e.rotationRate || {};
+    samples.push({
+      t: +(performance.now() - t0).toFixed(1),
+      ax: +(a.x || 0).toFixed(3), ay: +(a.y || 0).toFixed(3), az: +(a.z || 0).toFixed(3),
+      ra: +(r.alpha || 0).toFixed(3), rb: +(r.beta || 0).toFixed(3), rg: +(r.gamma || 0).toFixed(3),
+      hd: heading == null ? null : +heading.toFixed(1),
+    });
+  });
+});
+</script>
+</body>
+</html>
