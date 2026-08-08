@@ -90,12 +90,24 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
   }, [undo]);
 
   // --- coordinate helpers ---------------------------------------------------
+  /**
+   * Screen point -> image pixel.
+   *
+   * An <svg> with the default preserveAspectRatio scales the viewBox UNIFORMLY
+   * and centres it, so unless the element happens to match the viewBox aspect
+   * ratio there are bars down two sides. Mapping the element rect straight onto
+   * the viewBox ignores those bars and skews every click -- about 3 m off near
+   * the top and bottom edges here, while staying accurate in the middle, which
+   * is exactly the kind of error you don't notice until the map is wrong.
+   */
   const toImage = (evt: React.MouseEvent): { x: number; y: number } => {
-    const svg = svgRef.current!;
-    const r = svg.getBoundingClientRect();
+    const r = svgRef.current!.getBoundingClientRect();
+    const scale = Math.min(r.width / view.w, r.height / view.h);
+    const padX = (r.width - view.w * scale) / 2;
+    const padY = (r.height - view.h * scale) / 2;
     return {
-      x: view.x + ((evt.clientX - r.left) / r.width) * view.w,
-      y: view.y + ((evt.clientY - r.top) / r.height) * view.h,
+      x: view.x + (evt.clientX - r.left - padX) / scale,
+      y: view.y + (evt.clientY - r.top - padY) / scale,
     };
   };
 
@@ -165,11 +177,15 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
   const onMouseMove = (evt: React.MouseEvent) => {
     if (!pan.current || !svgRef.current) return;
     const r = svgRef.current.getBoundingClientRect();
-    setView((v) => ({
-      ...v,
-      x: pan.current!.vx - ((evt.clientX - pan.current!.x) / r.width) * v.w,
-      y: pan.current!.vy - ((evt.clientY - pan.current!.y) / r.height) * v.h,
-    }));
+    // Same uniform scale the SVG uses, so the map tracks the cursor exactly.
+    setView((v) => {
+      const scale = Math.min(r.width / v.w, r.height / v.h);
+      return {
+        ...v,
+        x: pan.current!.vx - (evt.clientX - pan.current!.x) / scale,
+        y: pan.current!.vy - (evt.clientY - pan.current!.y) / scale,
+      };
+    });
   };
   const endPan = () => { setTimeout(() => { pan.current = null; }, 0); };
 
