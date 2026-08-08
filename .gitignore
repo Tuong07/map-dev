@@ -8,3 +8,6 @@ dist/
 .vercel
 .claude/
 probes/recordings/*.json
+
+# a clone of this repo ended up nested inside it; never track that
+map-dev/
