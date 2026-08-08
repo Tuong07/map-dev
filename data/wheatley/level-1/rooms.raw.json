@@ -1,0 +1,979 @@
+{
+  "building": "wheatley",
+  "floor": 1,
+  "source": "010-Wheatley.pdf page 1",
+  "extractedAt": "2026-08-08T21:12:30.510Z",
+  "origin": {
+    "lat": 42.3135,
+    "lon": -71.0378
+  },
+  "georeferenced": false,
+  "image": {
+    "file": "/floorplans/wheatley-level-1.png",
+    "width": 5100,
+    "height": 3300
+  },
+  "pixelsPerMetre": 33.9567,
+  "rooms": [
+    {
+      "number": "1-001",
+      "type": "VESTIBULE",
+      "floor": 1,
+      "lat": 42.31415644,
+      "lon": -71.03636077,
+      "px": {
+        "x": 4023,
+        "y": 836
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-002A",
+      "type": "LOBBY",
+      "floor": 1,
+      "lat": 42.31410316,
+      "lon": -71.03639977,
+      "px": {
+        "x": 3914,
+        "y": 1036
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-003",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31413113,
+      "lon": -71.03629423,
+      "px": {
+        "x": 4209,
+        "y": 931
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-003A",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31407758,
+      "lon": -71.03630246,
+      "px": {
+        "x": 4186,
+        "y": 1132
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-003B",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31407785,
+      "lon": -71.0362649,
+      "px": {
+        "x": 4291,
+        "y": 1131
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-003F",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31416363,
+      "lon": -71.03629674,
+      "px": {
+        "x": 4202,
+        "y": 809
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-003G",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31413087,
+      "lon": -71.03623127,
+      "px": {
+        "x": 4385,
+        "y": 932
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-004",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31402004,
+      "lon": -71.03625846,
+      "px": {
+        "x": 4309,
+        "y": 1348
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-005",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31393852,
+      "lon": -71.03625881,
+      "px": {
+        "x": 4308,
+        "y": 1654
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-006",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31385513,
+      "lon": -71.03625524,
+      "px": {
+        "x": 4318,
+        "y": 1967
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-009",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31381383,
+      "lon": -71.03644842,
+      "px": {
+        "x": 3778,
+        "y": 2122
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-010",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31389296,
+      "lon": -71.03644878,
+      "px": {
+        "x": 3777,
+        "y": 1825
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-018",
+      "type": "RESTROOM",
+      "floor": 1,
+      "lat": 42.31411994,
+      "lon": -71.03646917,
+      "px": {
+        "x": 3720,
+        "y": 973
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-020",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31412154,
+      "lon": -71.0365951,
+      "px": {
+        "x": 3368,
+        "y": 967
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-025",
+      "type": "ELEC",
+      "floor": 1,
+      "lat": 42.31403815,
+      "lon": -71.03654179,
+      "px": {
+        "x": 3517,
+        "y": 1280
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-031",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31389243,
+      "lon": -71.03656505,
+      "px": {
+        "x": 3452,
+        "y": 1827
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-037",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31381463,
+      "lon": -71.03669527,
+      "px": {
+        "x": 3088,
+        "y": 2119
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-038",
+      "type": "SERVICE",
+      "floor": 1,
+      "lat": 42.31388816,
+      "lon": -71.0366942,
+      "px": {
+        "x": 3091,
+        "y": 1843
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-039",
+      "type": "SERVICE",
+      "floor": 1,
+      "lat": 42.31395024,
+      "lon": -71.03669491,
+      "px": {
+        "x": 3089,
+        "y": 1610
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-041",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31412101,
+      "lon": -71.03672854,
+      "px": {
+        "x": 2995,
+        "y": 969
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-042",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31404375,
+      "lon": -71.03672246,
+      "px": {
+        "x": 3012,
+        "y": 1259
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-043",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31395716,
+      "lon": -71.03676431,
+      "px": {
+        "x": 2895,
+        "y": 1584
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-044",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31389456,
+      "lon": -71.03676324,
+      "px": {
+        "x": 2898,
+        "y": 1819
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-045",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31381543,
+      "lon": -71.03676396,
+      "px": {
+        "x": 2896,
+        "y": 2116
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-046",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.3138165,
+      "lon": -71.03684266,
+      "px": {
+        "x": 2676,
+        "y": 2112
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-047",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31389509,
+      "lon": -71.03684373,
+      "px": {
+        "x": 2673,
+        "y": 1817
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-048",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31395823,
+      "lon": -71.03684695,
+      "px": {
+        "x": 2664,
+        "y": 1580
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-050A",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31403123,
+      "lon": -71.03683193,
+      "px": {
+        "x": 2706,
+        "y": 1306
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-050B",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31403149,
+      "lon": -71.0367958,
+      "px": {
+        "x": 2807,
+        "y": 1305
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-051A",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31406773,
+      "lon": -71.03683264,
+      "px": {
+        "x": 2704,
+        "y": 1169
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-051B",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31406826,
+      "lon": -71.0367958,
+      "px": {
+        "x": 2807,
+        "y": 1167
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-052",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31412207,
+      "lon": -71.03682656,
+      "px": {
+        "x": 2721,
+        "y": 965
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-053",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31412287,
+      "lon": -71.03692244,
+      "px": {
+        "x": 2453,
+        "y": 962
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-054",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31406666,
+      "lon": -71.03692244,
+      "px": {
+        "x": 2453,
+        "y": 1173
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-055",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31395716,
+      "lon": -71.03693425,
+      "px": {
+        "x": 2420,
+        "y": 1584
+      },
+      "confidence": 0.3
+    },
+    {
+      "number": "1-057",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.3138157,
+      "lon": -71.03692244,
+      "px": {
+        "x": 2453,
+        "y": 2115
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-060",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31389536,
+      "lon": -71.03701009,
+      "px": {
+        "x": 2208,
+        "y": 1816
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-061",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31395796,
+      "lon": -71.03701832,
+      "px": {
+        "x": 2185,
+        "y": 1581
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-062",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31403869,
+      "lon": -71.03701223,
+      "px": {
+        "x": 2202,
+        "y": 1278
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-063",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31411168,
+      "lon": -71.03701259,
+      "px": {
+        "x": 2201,
+        "y": 1004
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-064",
+      "type": "CLASSROOM",
+      "floor": 1,
+      "lat": 42.31412634,
+      "lon": -71.03711849,
+      "px": {
+        "x": 1905,
+        "y": 949
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-067",
+      "type": "ELEV",
+      "floor": 1,
+      "lat": 42.31404375,
+      "lon": -71.03650495,
+      "px": {
+        "x": 3620,
+        "y": 1259
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-068",
+      "type": "ELEV",
+      "floor": 1,
+      "lat": 42.31404268,
+      "lon": -71.03647203,
+      "px": {
+        "x": 3712,
+        "y": 1263
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-071",
+      "type": "MECH",
+      "floor": 1,
+      "lat": 42.3139497,
+      "lon": -71.03715855,
+      "px": {
+        "x": 1793,
+        "y": 1612
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-072",
+      "type": "WOMEN",
+      "floor": 1,
+      "lat": 42.31396223,
+      "lon": -71.03712242,
+      "px": {
+        "x": 1894,
+        "y": 1565
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-073",
+      "type": "MEN",
+      "floor": 1,
+      "lat": 42.31393212,
+      "lon": -71.03712135,
+      "px": {
+        "x": 1897,
+        "y": 1678
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-074",
+      "type": "LOBBY",
+      "floor": 1,
+      "lat": 42.31399979,
+      "lon": -71.037209,
+      "px": {
+        "x": 1652,
+        "y": 1424
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-075A",
+      "type": "CONF",
+      "floor": 1,
+      "lat": 42.31411009,
+      "lon": -71.03728699,
+      "px": {
+        "x": 1434,
+        "y": 1010
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31404268,
+      "lon": -71.03735639,
+      "px": {
+        "x": 1240,
+        "y": 1263
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077A",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31407305,
+      "lon": -71.03733993,
+      "px": {
+        "x": 1286,
+        "y": 1149
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077AA",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31407412,
+      "lon": -71.03729629,
+      "px": {
+        "x": 1408,
+        "y": 1145
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077B",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31413007,
+      "lon": -71.03734136,
+      "px": {
+        "x": 1282,
+        "y": 935
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077C",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31412953,
+      "lon": -71.0373775,
+      "px": {
+        "x": 1181,
+        "y": 937
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077D",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.3141298,
+      "lon": -71.03741113,
+      "px": {
+        "x": 1087,
+        "y": 936
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077E",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31408025,
+      "lon": -71.0373986,
+      "px": {
+        "x": 1122,
+        "y": 1122
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077G",
+      "type": "CONF",
+      "floor": 1,
+      "lat": 42.31407519,
+      "lon": -71.03743617,
+      "px": {
+        "x": 1017,
+        "y": 1141
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077H",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31413007,
+      "lon": -71.03748232,
+      "px": {
+        "x": 888,
+        "y": 935
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077J",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31411515,
+      "lon": -71.03751988,
+      "px": {
+        "x": 783,
+        "y": 991
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077K",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.3140949,
+      "lon": -71.03754922,
+      "px": {
+        "x": 701,
+        "y": 1067
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077L",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31406906,
+      "lon": -71.03758428,
+      "px": {
+        "x": 603,
+        "y": 1164
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077M",
+      "type": "SERVICE",
+      "floor": 1,
+      "lat": 42.31403735,
+      "lon": -71.03753884,
+      "px": {
+        "x": 730,
+        "y": 1283
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077N",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31399633,
+      "lon": -71.03749985,
+      "px": {
+        "x": 839,
+        "y": 1437
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077P",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31399579,
+      "lon": -71.03744654,
+      "px": {
+        "x": 988,
+        "y": 1439
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077Q",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31399473,
+      "lon": -71.03741077,
+      "px": {
+        "x": 1088,
+        "y": 1443
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077R",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31404721,
+      "lon": -71.03739753,
+      "px": {
+        "x": 1125,
+        "y": 1246
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077T",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31393532,
+      "lon": -71.03744153,
+      "px": {
+        "x": 1002,
+        "y": 1666
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077V",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31399553,
+      "lon": -71.0373478,
+      "px": {
+        "x": 1264,
+        "y": 1440
+      },
+      "confidence": 0.5
+    },
+    {
+      "number": "1-077W",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31393585,
+      "lon": -71.03734172,
+      "px": {
+        "x": 1281,
+        "y": 1664
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077X",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31396169,
+      "lon": -71.03745441,
+      "px": {
+        "x": 966,
+        "y": 1567
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-077Y",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31396143,
+      "lon": -71.03741542,
+      "px": {
+        "x": 1075,
+        "y": 1568
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-078",
+      "type": "SEMINAR",
+      "floor": 1,
+      "lat": 42.31394518,
+      "lon": -71.03728198,
+      "px": {
+        "x": 1448,
+        "y": 1629
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-078A",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31400032,
+      "lon": -71.03729843,
+      "px": {
+        "x": 1402,
+        "y": 1422
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-078B",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31399979,
+      "lon": -71.03726373,
+      "px": {
+        "x": 1499,
+        "y": 1424
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-079",
+      "type": "LOUNGE",
+      "floor": 1,
+      "lat": 42.31381144,
+      "lon": -71.03744332,
+      "px": {
+        "x": 997,
+        "y": 2131
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-085",
+      "type": "STAGE",
+      "floor": 1,
+      "lat": 42.31380824,
+      "lon": -71.03711455,
+      "px": {
+        "x": 1916,
+        "y": 2143
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-088",
+      "type": "AUDITORIUM",
+      "floor": 1,
+      "lat": 42.31380984,
+      "lon": -71.03724907,
+      "px": {
+        "x": 1540,
+        "y": 2137
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-089",
+      "type": "STORAGE",
+      "floor": 1,
+      "lat": 42.31380984,
+      "lon": -71.03737571,
+      "px": {
+        "x": 1186,
+        "y": 2137
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-090",
+      "type": "LOUNGE",
+      "floor": 1,
+      "lat": 42.31372352,
+      "lon": -71.03743223,
+      "px": {
+        "x": 1028,
+        "y": 2461
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-091",
+      "type": "MECH",
+      "floor": 1,
+      "lat": 42.31374483,
+      "lon": -71.03731274,
+      "px": {
+        "x": 1362,
+        "y": 2381
+      },
+      "confidence": 1
+    },
+    {
+      "number": "1-771",
+      "type": "OFFICE",
+      "floor": 1,
+      "lat": 42.31407971,
+      "lon": -71.03748053,
+      "px": {
+        "x": 893,
+        "y": 1124
+      },
+      "confidence": 1
+    }
+  ]
+}
