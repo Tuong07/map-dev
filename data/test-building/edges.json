@@ -1,0 +1,240 @@
+[
+  {
+    "id": "T1-N001__T1-N002",
+    "from": "T1-N001",
+    "to": "T1-N002",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N002__T1-N003",
+    "from": "T1-N002",
+    "to": "T1-N003",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N003__T1-N004",
+    "from": "T1-N003",
+    "to": "T1-N004",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N004__T1-N005",
+    "from": "T1-N004",
+    "to": "T1-N005",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N005__T1-N006",
+    "from": "T1-N005",
+    "to": "T1-N006",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N006__T1-N007",
+    "from": "T1-N006",
+    "to": "T1-N007",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N004__T1-N008",
+    "from": "T1-N004",
+    "to": "T1-N008",
+    "meters": 15,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N008__T1-S1",
+    "from": "T1-N008",
+    "to": "T1-S1",
+    "meters": 5,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N008__T1-L1",
+    "from": "T1-N008",
+    "to": "T1-L1",
+    "meters": 5,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-N002__T1-D001",
+    "from": "T1-N002",
+    "to": "T1-D001",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T1-N002__T1-D002",
+    "from": "T1-N002",
+    "to": "T1-D002",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T1-N003__T1-D003",
+    "from": "T1-N003",
+    "to": "T1-D003",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T1-N003__T1-D004",
+    "from": "T1-N003",
+    "to": "T1-D004",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T1-N005__T1-D005",
+    "from": "T1-N005",
+    "to": "T1-D005",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T1-N005__T1-D006",
+    "from": "T1-N005",
+    "to": "T1-D006",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T1-N006__T1-D007",
+    "from": "T1-N006",
+    "to": "T1-D007",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T2-N001__T2-N002",
+    "from": "T2-N001",
+    "to": "T2-N002",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N002__T2-N003",
+    "from": "T2-N002",
+    "to": "T2-N003",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N003__T2-N004",
+    "from": "T2-N003",
+    "to": "T2-N004",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N004__T2-N005",
+    "from": "T2-N004",
+    "to": "T2-N005",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N005__T2-N006",
+    "from": "T2-N005",
+    "to": "T2-N006",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N006__T2-N007",
+    "from": "T2-N006",
+    "to": "T2-N007",
+    "meters": 10,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N004__T2-N008",
+    "from": "T2-N004",
+    "to": "T2-N008",
+    "meters": 15,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N008__T2-S1",
+    "from": "T2-N008",
+    "to": "T2-S1",
+    "meters": 5,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N008__T2-L1",
+    "from": "T2-N008",
+    "to": "T2-L1",
+    "meters": 5,
+    "kind": "hallway"
+  },
+  {
+    "id": "T2-N002__T2-D001",
+    "from": "T2-N002",
+    "to": "T2-D001",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T2-N003__T2-D002",
+    "from": "T2-N003",
+    "to": "T2-D002",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T2-N005__T2-D003",
+    "from": "T2-N005",
+    "to": "T2-D003",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T2-N005__T2-D004",
+    "from": "T2-N005",
+    "to": "T2-D004",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T2-N006__T2-D005",
+    "from": "T2-N006",
+    "to": "T2-D005",
+    "meters": 3,
+    "kind": "door"
+  },
+  {
+    "id": "T1-E001__T1-N001",
+    "from": "T1-E001",
+    "to": "T1-N001",
+    "meters": 6,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-E002__T1-N007",
+    "from": "T1-E002",
+    "to": "T1-N007",
+    "meters": 6,
+    "kind": "hallway"
+  },
+  {
+    "id": "T1-S1__T2-S1",
+    "from": "T1-S1",
+    "to": "T2-S1",
+    "meters": 4.2,
+    "kind": "stair"
+  },
+  {
+    "id": "T1-L1__T2-L1",
+    "from": "T1-L1",
+    "to": "T2-L1",
+    "meters": 4.2,
+    "kind": "elevator"
+  }
+]

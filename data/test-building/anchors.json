@@ -1,0 +1,20 @@
+[
+  {
+    "id": "T1-A01",
+    "nodeId": "T1-E001",
+    "facingBearing": 90,
+    "heightMeters": 1.5
+  },
+  {
+    "id": "T1-A02",
+    "nodeId": "T1-N004",
+    "facingBearing": 0,
+    "heightMeters": 1.5
+  },
+  {
+    "id": "T2-A01",
+    "nodeId": "T2-N004",
+    "facingBearing": 0,
+    "heightMeters": 1.5
+  }
+]

@@ -1,0 +1,278 @@
+[
+  {
+    "id": "T1-N001",
+    "lat": 42.31,
+    "lon": -71.04,
+    "floor": 1,
+    "elevation": 0,
+    "type": "corridor"
+  },
+  {
+    "id": "T1-N002",
+    "lat": 42.31,
+    "lon": -71.0398785,
+    "floor": 1,
+    "elevation": 0,
+    "type": "corridor"
+  },
+  {
+    "id": "T1-N003",
+    "lat": 42.31,
+    "lon": -71.0397571,
+    "floor": 1,
+    "elevation": 0,
+    "type": "corridor"
+  },
+  {
+    "id": "T1-N004",
+    "lat": 42.31,
+    "lon": -71.0396356,
+    "floor": 1,
+    "elevation": 0,
+    "type": "junction"
+  },
+  {
+    "id": "T1-N005",
+    "lat": 42.31,
+    "lon": -71.0395141,
+    "floor": 1,
+    "elevation": 0,
+    "type": "corridor"
+  },
+  {
+    "id": "T1-N006",
+    "lat": 42.31,
+    "lon": -71.0393926,
+    "floor": 1,
+    "elevation": 0,
+    "type": "corridor"
+  },
+  {
+    "id": "T1-N007",
+    "lat": 42.31,
+    "lon": -71.0392712,
+    "floor": 1,
+    "elevation": 0,
+    "type": "corridor"
+  },
+  {
+    "id": "T1-N008",
+    "lat": 42.3101357,
+    "lon": -71.0396356,
+    "floor": 1,
+    "elevation": 0,
+    "type": "junction"
+  },
+  {
+    "id": "T1-S1",
+    "lat": 42.3101357,
+    "lon": -71.0396963,
+    "floor": 1,
+    "elevation": 0,
+    "type": "stair",
+    "vertical": "STAIR 1"
+  },
+  {
+    "id": "T1-L1",
+    "lat": 42.3101357,
+    "lon": -71.0395748,
+    "floor": 1,
+    "elevation": 0,
+    "type": "elevator",
+    "vertical": "LIFT 1"
+  },
+  {
+    "id": "T1-D001",
+    "lat": 42.3100271,
+    "lon": -71.0398785,
+    "floor": 1,
+    "elevation": 0,
+    "type": "door"
+  },
+  {
+    "id": "T1-D002",
+    "lat": 42.3099729,
+    "lon": -71.0398785,
+    "floor": 1,
+    "elevation": 0,
+    "type": "door"
+  },
+  {
+    "id": "T1-D003",
+    "lat": 42.3100271,
+    "lon": -71.0397571,
+    "floor": 1,
+    "elevation": 0,
+    "type": "door"
+  },
+  {
+    "id": "T1-D004",
+    "lat": 42.3099729,
+    "lon": -71.0397571,
+    "floor": 1,
+    "elevation": 0,
+    "type": "door"
+  },
+  {
+    "id": "T1-D005",
+    "lat": 42.3100271,
+    "lon": -71.0395141,
+    "floor": 1,
+    "elevation": 0,
+    "type": "door"
+  },
+  {
+    "id": "T1-D006",
+    "lat": 42.3099729,
+    "lon": -71.0395141,
+    "floor": 1,
+    "elevation": 0,
+    "type": "door"
+  },
+  {
+    "id": "T1-D007",
+    "lat": 42.3100271,
+    "lon": -71.0393926,
+    "floor": 1,
+    "elevation": 0,
+    "type": "door"
+  },
+  {
+    "id": "T2-N001",
+    "lat": 42.31,
+    "lon": -71.04,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "corridor"
+  },
+  {
+    "id": "T2-N002",
+    "lat": 42.31,
+    "lon": -71.0398785,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "corridor"
+  },
+  {
+    "id": "T2-N003",
+    "lat": 42.31,
+    "lon": -71.0397571,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "corridor"
+  },
+  {
+    "id": "T2-N004",
+    "lat": 42.31,
+    "lon": -71.0396356,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "junction"
+  },
+  {
+    "id": "T2-N005",
+    "lat": 42.31,
+    "lon": -71.0395141,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "corridor"
+  },
+  {
+    "id": "T2-N006",
+    "lat": 42.31,
+    "lon": -71.0393926,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "corridor"
+  },
+  {
+    "id": "T2-N007",
+    "lat": 42.31,
+    "lon": -71.0392712,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "corridor"
+  },
+  {
+    "id": "T2-N008",
+    "lat": 42.3101357,
+    "lon": -71.0396356,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "junction"
+  },
+  {
+    "id": "T2-S1",
+    "lat": 42.3101357,
+    "lon": -71.0396963,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "stair",
+    "vertical": "STAIR 1"
+  },
+  {
+    "id": "T2-L1",
+    "lat": 42.3101357,
+    "lon": -71.0395748,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "elevator",
+    "vertical": "LIFT 1"
+  },
+  {
+    "id": "T2-D001",
+    "lat": 42.3100271,
+    "lon": -71.0398785,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "door"
+  },
+  {
+    "id": "T2-D002",
+    "lat": 42.3099729,
+    "lon": -71.0397571,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "door"
+  },
+  {
+    "id": "T2-D003",
+    "lat": 42.3100271,
+    "lon": -71.0395141,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "door"
+  },
+  {
+    "id": "T2-D004",
+    "lat": 42.3099729,
+    "lon": -71.0395141,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "door"
+  },
+  {
+    "id": "T2-D005",
+    "lat": 42.3099729,
+    "lon": -71.0393926,
+    "floor": 2,
+    "elevation": 4.2,
+    "type": "door"
+  },
+  {
+    "id": "T1-E001",
+    "lat": 42.31,
+    "lon": -71.0400729,
+    "floor": 1,
+    "elevation": 0,
+    "type": "entrance"
+  },
+  {
+    "id": "T1-E002",
+    "lat": 42.31,
+    "lon": -71.0391983,
+    "floor": 1,
+    "elevation": 0,
+    "type": "entrance"
+  }
+]

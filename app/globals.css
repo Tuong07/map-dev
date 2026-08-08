@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+
+:root {
+  --bg: #fafafa;
+  --fg: #18181b;
+  --muted: #71717a;
+  --line: #e4e4e7;
+  --accent: #2563eb;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-tap-highlight-color: transparent;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Keep content clear of the iOS home indicator. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

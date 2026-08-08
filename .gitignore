@@ -11,3 +11,9 @@ probes/recordings/*.json
 
 # a clone of this repo ended up nested inside it; never track that
 map-dev/
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo

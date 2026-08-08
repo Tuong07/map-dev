@@ -1,0 +1,12 @@
+{
+  "id": "test-building",
+  "name": "Testwood Hall (fake)",
+  "origin": {
+    "lat": 42.31,
+    "lon": -71.04
+  },
+  "floors": [
+    1,
+    2
+  ]
+}

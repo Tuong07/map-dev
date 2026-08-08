@@ -1,0 +1,74 @@
+[
+  {
+    "number": "T1-002",
+    "name": "Lecture Hall",
+    "floor": 1,
+    "doorNodeId": "T1-D001"
+  },
+  {
+    "number": "T1-004",
+    "name": "Seminar Room",
+    "floor": 1,
+    "doorNodeId": "T1-D002"
+  },
+  {
+    "number": "T1-006",
+    "name": "Computer Lab",
+    "floor": 1,
+    "doorNodeId": "T1-D003"
+  },
+  {
+    "number": "T1-008",
+    "name": "Study Space",
+    "floor": 1,
+    "doorNodeId": "T1-D004"
+  },
+  {
+    "number": "T1-010",
+    "name": "Advising Office",
+    "floor": 1,
+    "doorNodeId": "T1-D005"
+  },
+  {
+    "number": "T1-012",
+    "name": "Classroom",
+    "floor": 1,
+    "doorNodeId": "T1-D006"
+  },
+  {
+    "number": "T1-014",
+    "name": "Quiet Room",
+    "floor": 1,
+    "doorNodeId": "T1-D007"
+  },
+  {
+    "number": "T2-002",
+    "name": "Physics Lab",
+    "floor": 2,
+    "doorNodeId": "T2-D001"
+  },
+  {
+    "number": "T2-004",
+    "name": "Faculty Office",
+    "floor": 2,
+    "doorNodeId": "T2-D002"
+  },
+  {
+    "number": "T2-006",
+    "name": "Classroom",
+    "floor": 2,
+    "doorNodeId": "T2-D003"
+  },
+  {
+    "number": "T2-008",
+    "name": "Conference Room",
+    "floor": 2,
+    "doorNodeId": "T2-D004"
+  },
+  {
+    "number": "T2-010",
+    "name": "Storage",
+    "floor": 2,
+    "doorNodeId": "T2-D005"
+  }
+]
