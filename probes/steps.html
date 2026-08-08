@@ -38,7 +38,16 @@
 
 <h2>Tuning</h2>
 <div class="card">
-  <label>Peak threshold — <span class="mono" id="hiOut">11.0</span> m/s²</label>
+  <label style="display:flex;align-items:center;gap:10px;margin-top:0">
+    <input type="checkbox" id="adaptive" checked style="width:auto">
+    <span>Adaptive threshold (recommended)</span>
+  </label>
+  <div class="hint" style="margin-bottom:6px">Scales the trigger to how hard you're actually
+    walking. A fixed threshold tuned on brisk walking finds <b>zero</b> steps when you stroll
+    while watching the screen — which is exactly how you'll walk during Test 5.</div>
+  <div class="row"><span class="k">live threshold</span><span class="v" id="thNow">—</span></div>
+
+  <label>Peak threshold (fixed mode only) — <span class="mono" id="hiOut">11.0</span> m/s²</label>
   <input type="range" id="hi" min="10.2" max="14" step="0.1" value="11">
   <label>Re-arm threshold — <span class="mono" id="loOut">9.9</span> m/s²</label>
   <input type="range" id="lo" min="8.5" max="10.1" step="0.1" value="9.9">
@@ -70,6 +79,7 @@ import { $, fmt, onStart, slider } from './ui.mjs';
 const det = new StepDetector();
 let stride = 0.7;
 
+$('adaptive').addEventListener('change', (e) => { det.adaptive = e.target.checked; });
 slider('hi', 'hiOut', (v) => det.high = v, 1);
 slider('lo', 'loOut', (v) => det.low = v, 1);
 slider('gap', 'gapOut', (v) => det.minGapMs = v, 0);
@@ -92,7 +102,9 @@ function draw() {
   ctx.setLineDash([4, 4]);
   ctx.strokeStyle = '#d4d4d8';
   ctx.lineWidth = 1;
-  for (const t of [det.high, det.low]) {
+  // Draw the LIVE thresholds. In adaptive mode these move with how hard you're
+  // walking, which is the whole point -- watch them rise as you speed up.
+  for (const t of [det.threshold, det.rearm]) {
     ctx.beginPath(); ctx.moveTo(0, y(t)); ctx.lineTo(W, y(t)); ctx.stroke();
   }
   ctx.setLineDash([]);
@@ -150,6 +162,7 @@ onStart('start', () => {
     $('count').textContent = det.steps;
     $('dist').textContent = (det.steps * stride).toFixed(1);
     $('filt').textContent = fmt(det.filtered);
+    $('thNow').textContent = fmt(det.threshold) + '  (re-arm ' + fmt(det.rearm) + ')';
     checkErr();
     draw();
   });

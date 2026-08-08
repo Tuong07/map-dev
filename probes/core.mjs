@@ -10,16 +10,37 @@
  *   refractory  -- peaks closer together than `minGapMs` are ignored
  */
 export class StepDetector {
-  constructor({ high = 11.0, low = 9.9, minGapMs = 280, alpha = 0.25 } = {}) {
-    Object.assign(this, { high, low, minGapMs, alpha });
+  /**
+   * @param adaptive  scale the threshold to how hard the person is actually
+   *                  walking, instead of using one fixed number
+   * @param k         peak must exceed the baseline by k x the recent wobble
+   * @param minProm   floor on that margin, so standing still can't trigger steps
+   * @param high/low  fixed thresholds, used only when adaptive is false
+   */
+  constructor({
+    high = 11.0, low = 9.9, minGapMs = 280, alpha = 0.25,
+    adaptive = true, k = 1.2, minProm = 0.3,
+  } = {}) {
+    Object.assign(this, { high, low, minGapMs, alpha, adaptive, k, minProm });
     this.reset();
   }
 
   reset() {
     this.filtered = 9.81;
+    this.mu = 9.81;    // slow baseline -- settles on gravity
+    this.dev = 0.3;    // slow mean absolute deviation -- how hard they're walking
     this.armed = true;
     this.lastStepAt = -1e9;
     this.steps = 0;
+  }
+
+  /** Current trigger level. Exposed so the test pages can plot it. */
+  get threshold() {
+    return this.adaptive ? this.mu + Math.max(this.minProm, this.k * this.dev) : this.high;
+  }
+
+  get rearm() {
+    return this.adaptive ? this.mu : this.low;
   }
 
   /** Feed accelerationIncludingGravity. Returns true on the frame a step fires. */
@@ -27,9 +48,18 @@ export class StepDetector {
     const mag = Math.hypot(x || 0, y || 0, z || 0);
     this.filtered += this.alpha * (mag - this.filtered);
 
-    if (this.filtered < this.low) this.armed = true;
+    // Baseline and wobble track much slower than the step signal, so a footfall
+    // moves `filtered` without dragging the threshold up with it.
+    //
+    // This is what makes careful, screen-watching walking work. A fixed 11.0 was
+    // tuned on brisk walking; walk gently and the peaks never reach it, so steps
+    // vanish. Scaling the trigger to the recent signal keeps both gaits working.
+    this.mu += 0.01 * (this.filtered - this.mu);
+    this.dev += 0.01 * (Math.abs(this.filtered - this.mu) - this.dev);
 
-    if (this.armed && this.filtered > this.high && tMs - this.lastStepAt > this.minGapMs) {
+    if (this.filtered < this.rearm) this.armed = true;
+
+    if (this.armed && this.filtered > this.threshold && tMs - this.lastStepAt > this.minGapMs) {
       this.armed = false;
       this.lastStepAt = tMs;
       this.steps++;
