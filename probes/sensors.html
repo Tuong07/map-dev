@@ -84,7 +84,12 @@ $('dUA').textContent = navigator.userAgent;
 
 const rate = new RateMeter();
 
-onStart('start', () => {
+onStart('start', (perm) => {
+  // onStart hands us the result of the iOS permission prompt -- show it, so a
+  // silent denial is distinguishable from a sensor that simply isn't reporting.
+  verdict($('pMotion'), perm.motion === 'granted', perm.motion, perm.motion);
+  verdict($('pOrient'), perm.orientation === 'granted', perm.orientation, perm.orientation);
+
   window.addEventListener('devicemotion', (e) => {
     rate.tick();
     $('hz').textContent = rate.hz ? fmt(rate.hz, 0) + ' Hz' : '—';

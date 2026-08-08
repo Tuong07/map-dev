@@ -66,7 +66,10 @@
 </div>
 
 <script type="module">
-import { StepDetector, TurnTracker, GraphTracker, driftRadius, dist } from './core.mjs';
+import {
+  StepDetector, TurnTracker, GraphTracker, driftRadius, dist,
+  yawRateAboutVertical, GravityFilter, AxisResolver,
+} from './core.mjs';
 import { $, fmt, onStart, slider } from './ui.mjs';
 
 let L1 = 30, L2 = 20, turnDir = 'right', stride = 0.7;
@@ -78,6 +81,8 @@ const cv = $('map');
 const ctx = cv.getContext('2d');
 const det = new StepDetector();
 const tt = new TurnTracker();
+const grav = new GravityFilter(0.7);
+const axes = new AxisResolver();
 
 function build() {
   const sign = turnDir === 'right' ? 1 : -1;
@@ -177,10 +182,20 @@ onStart('start', () => {
     const a = e.accelerationIncludingGravity || {};
     const r = e.rotationRate || {};
     const now = e.timeStamp;
-    const dt = last ? Math.min((now - last) / 1000, 0.1) : (e.interval || 16) / 1000;
+    const dt = last
+      ? Math.max(0, Math.min((now - last) / 1000, 0.1))
+      : (e.interval || 16) / 1000;
     last = now;
 
-    tt.push(r.alpha, dt, now);
+    // Same pipeline Test 3 needed: smooth gravity to get a stable "down", learn
+    // which gyro axis this device actually uses, then measure rotation about
+    // real-world vertical. Reading r.alpha directly is what made Test 3 report
+    // zero turns while the phone was genuinely turning 360 degrees.
+    grav.push(a, dt);
+    axes.push(r, grav, dt);
+    // No bias calibration here: heading is re-snapped to the corridor bearing at
+    // every junction, so drift never accumulates long enough to matter.
+    tt.push(yawRateAboutVertical(r, grav, null, axes.map), dt, now);
 
     if (det.push(a.x, a.y, a.z, now)) {
       const before = fix.edgeId;

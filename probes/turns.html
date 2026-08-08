@@ -17,8 +17,8 @@
 <div class="card">
   <div class="hint">Lay the phone <b>flat and completely still</b>, then start. It measures how fast
     the gyro lies when nothing is moving, and subtracts it from here on.</div>
-  <button id="cal" class="secondary" style="margin-top:10px">Calibrate — 10 s</button>
-  <div class="row"><span class="k">measured bias</span><span class="v" id="bias">not measured</span></div>
+  <button id="cal" class="secondary" style="margin-top:10px" disabled>Calibrate — 10 s</button>
+  <div class="row"><span class="k">bias α / β / γ</span><span class="v" id="bias">not measured</span></div>
   <div class="row"><span class="k">drift if left alone</span><span class="v" id="driftMin">—</span></div>
 </div>
 
@@ -31,21 +31,42 @@
 <div class="card">
   <div class="row"><span class="k">turns detected</span><span class="v" id="nTurns">0</span></div>
   <div class="row"><span class="k">live yaw</span><span class="v" id="yaw">0°</span></div>
-  <div class="row"><span class="k">rotation rate</span><span class="v" id="rate">0 °/s</span></div>
+  <div class="row"><span class="k">yaw rate (vertical)</span><span class="v" id="rate">0 °/s</span></div>
+</div>
+
+<h2>Diagnostics</h2>
+<div class="card">
+  <div class="row"><span class="k">gyro axis mapping</span><span class="v" id="dAxis">learning…</span></div>
+  <div class="row"><span class="k">samples received</span><span class="v" id="dN">0</span></div>
+  <div class="row"><span class="k">peak yaw rate</span><span class="v" id="dPeak">—</span></div>
+  <div class="row"><span class="k">raw alpha</span><span class="v" id="dAlpha">—</span></div>
+  <div class="row"><span class="k">raw gamma</span><span class="v" id="dGamma">—</span></div>
+  <div class="row"><span class="k">smoothed gravity z</span><span class="v" id="dGz">—</span></div>
+  <div class="hint">Turn on the spot while watching these. <b>Yaw rate</b> should swing hard
+    however you hold the phone. Alpha and gamma are the raw axes it's built from — flat
+    puts the signal in alpha, upright puts it in gamma. That's the whole reason we
+    project onto gravity instead of trusting one axis.</div>
 </div>
 
 <ul class="log" id="log"></ul>
 
 <button id="reset" class="secondary" style="margin-top:12px">Reset walk</button>
+<button id="dump" class="secondary">Download this walk</button>
+<div class="hint" style="margin-bottom:16px">Walk the square, then download and send me the file.
+  It captures every raw reading so I can replay the whole pipeline and see exactly where the
+  rotation is being lost — instead of guessing from a screenshot.</div>
 
 <h2>Tuning</h2>
 <div class="card">
-  <label>Counts as a turn above — <span class="mono" id="thOut">60</span>°</label>
-  <input type="range" id="th" min="30" max="100" step="5" value="60">
-  <label>Must settle for — <span class="mono" id="stOut">400</span> ms</label>
-  <input type="range" id="st" min="150" max="900" step="50" value="400">
-  <label>Counts as rotating above — <span class="mono" id="mvOut">25</span> °/s</label>
-  <input type="range" id="mv" min="10" max="60" step="5" value="25">
+  <label>Counts as a turn above — <span class="mono" id="thOut">50</span>°</label>
+  <input type="range" id="th" min="30" max="100" step="5" value="50">
+  <label>Net rotation measured over — <span class="mono" id="stOut">1000</span> ms</label>
+  <input type="range" id="st" min="400" max="1600" step="100" value="1000">
+  <label>Below this net rotation you've stopped — <span class="mono" id="mvOut">15</span>°</label>
+  <input type="range" id="mv" min="5" max="40" step="5" value="15">
+  <div class="hint">The window matters most. Your body sways at roughly 1 Hz while walking, so
+    a 1000 ms window contains one whole sway and it cancels out. Shorten it and arm swing
+    starts looking like turning.</div>
 </div>
 
 <h2>What passes</h2>
@@ -60,48 +81,118 @@
 </div>
 
 <script type="module">
-import { TurnTracker } from './core.mjs';
+import { TurnTracker, yawRateAboutVertical, GravityFilter, AxisResolver } from './core.mjs';
 import { $, fmt, onStart, slider } from './ui.mjs';
 
 const tt = new TurnTracker();
 slider('th', 'thOut', (v) => tt.turnThresholdDeg = v, 0);
-slider('st', 'stOut', (v) => tt.settleMs = v, 0);
-slider('mv', 'mvOut', (v) => tt.moveRateDeg = v, 0);
+slider('st', 'stOut', (v) => tt.windowMs = v, 0);
+slider('mv', 'mvOut', (v) => tt.settleDeg = v, 0);
 
-let calibrating = false, calSum = 0, calN = 0, calUntil = 0;
+let calibrating = false, calN = 0, calUntil = 0;
 let last = 0;
+// Bias is per physical axis, not a single projected number -- see core.mjs.
+const zero = () => ({ alpha: 0, beta: 0, gamma: 0 });
+let gyroBias = zero();
+let calSum = zero();
+const grav = new GravityFilter(0.7);
+const axes = new AxisResolver();
+let samples = 0, peakRate = 0;
+const trace = [];          // every raw reading, so a bad walk can be replayed offline
+const TRACE_CAP = 30000;   // ~8 min at 60 Hz
 
 $('cal').addEventListener('click', () => {
-  calibrating = true; calSum = 0; calN = 0;
+  calibrating = true; calN = 0;
+  calSum = zero();
+  gyroBias = zero();
   calUntil = performance.now() + 10000;
-  tt.bias = 0;
   $('cal').textContent = 'Hold still…';
   $('cal').disabled = true;
 });
 
+$('dump').addEventListener('click', () => {
+  const payload = {
+    recordedAt: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    gyroBias,
+    params: {
+      turnThresholdDeg: tt.turnThresholdDeg,
+      windowMs: tt.windowMs,
+      settleDeg: tt.settleDeg,
+    },
+    result: { turns: tt.turns, yaw: tt.yaw, samples, peakRate },
+    trace,
+  };
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'turns-' + Date.now() + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
 $('reset').addEventListener('click', () => {
   tt.reset();
+  samples = 0; peakRate = 0; trace.length = 0;
   $('log').innerHTML = '';
   $('nTurns').textContent = '0';
   $('total').textContent = '0°';
 });
 
 onStart('start', () => {
+  // Calibration reads live sensor data, so it can't run before they're enabled.
+  $('cal').disabled = false;
+
   window.addEventListener('devicemotion', (e) => {
     const r = e.rotationRate || {};
-    const raw = r.alpha || 0;
+    const g = e.accelerationIncludingGravity || {};
     const now = e.timeStamp;
-    const dt = last ? Math.min((now - last) / 1000, 0.1) : (e.interval || 16) / 1000;
+    // Clamp to a POSITIVE range. If timeStamp ever goes backwards -- which some
+    // WebKit builds do -- a negative dt would integrate yaw in reverse and quietly
+    // cancel out real turns.
+    const dt = last
+      ? Math.max(0, Math.min((now - last) / 1000, 0.1))
+      : (e.interval || 16) / 1000;
     last = now;
 
+    // Smooth the accelerometer first -- walking makes the raw vector lurch once
+    // per step, and it's our only reference for which way is down.
+    grav.push(g, dt);
+    // Learn which gyro axis is really which, from how gravity moves. Devices
+    // don't all follow the spec, and reading the wrong axis loses turns entirely.
+    axes.push(r, grav, dt);
+    // Rotation about real-world vertical, not about a fixed device axis, so this
+    // survives the phone being tilted up to read -- which is how people walk.
+    const raw = yawRateAboutVertical(r, grav, gyroBias, axes.map);
+
+    samples++;
+    if (Math.abs(raw) > peakRate) peakRate = Math.abs(raw);
+
+    if (trace.length < TRACE_CAP) {
+      trace.push({
+        t: +now.toFixed(1), dt: +dt.toFixed(4),
+        ra: +(r.alpha || 0).toFixed(2), rb: +(r.beta || 0).toFixed(2), rg: +(r.gamma || 0).toFixed(2),
+        ax: +(g.x || 0).toFixed(2), ay: +(g.y || 0).toFixed(2), az: +(g.z || 0).toFixed(2),
+        gx: +grav.x.toFixed(2), gy: +grav.y.toFixed(2), gz: +grav.z.toFixed(2),
+        yr: +raw.toFixed(2), yaw: +tt.yaw.toFixed(2), cal: calibrating ? 1 : 0,
+      });
+    }
+
     if (calibrating) {
-      calSum += raw; calN++;
+      calSum.alpha += r.alpha || 0;
+      calSum.beta += r.beta || 0;
+      calSum.gamma += r.gamma || 0;
+      calN++;
       if (performance.now() >= calUntil) {
         calibrating = false;
-        tt.bias = calN ? calSum / calN : 0;
-        $('bias').textContent = fmt(tt.bias, 3) + ' °/s';
-        $('driftMin').textContent = fmt(Math.abs(tt.bias) * 60, 1) + '° per minute';
-        $('driftMin').className = 'v ' + (Math.abs(tt.bias) * 60 < 30 ? 'good' : 'warn');
+        gyroBias = calN
+          ? { alpha: calSum.alpha / calN, beta: calSum.beta / calN, gamma: calSum.gamma / calN }
+          : zero();
+        const mag = Math.hypot(gyroBias.alpha, gyroBias.beta, gyroBias.gamma);
+        $('bias').textContent =
+          `${fmt(gyroBias.alpha, 2)} / ${fmt(gyroBias.beta, 2)} / ${fmt(gyroBias.gamma, 2)}`;
+        $('driftMin').textContent = fmt(mag * 60, 1) + '° per minute';
+        $('driftMin').className = 'v ' + (mag * 60 < 30 ? 'good' : 'warn');
         $('cal').textContent = 'Recalibrate';
         $('cal').disabled = false;
         tt.reset();
@@ -119,7 +210,14 @@ onStart('start', () => {
     }
 
     $('yaw').textContent = fmt(tt.yaw, 0) + '°';
-    $('rate').textContent = fmt(raw - tt.bias, 1) + ' °/s';
+    $('rate').textContent = fmt(raw, 1) + ' °/s';
+    $('dAxis').textContent = axes.confident ? axes.name + ' (locked)' : 'learning… ' + axes.n;
+    $('dAxis').className = 'v ' + (axes.confident ? 'good' : '');
+    $('dN').textContent = samples.toLocaleString();
+    $('dPeak').textContent = fmt(peakRate, 1) + ' °/s';
+    $('dAlpha').textContent = fmt(r.alpha, 1);
+    $('dGamma').textContent = fmt(r.gamma, 1);
+    $('dGz').textContent = fmt(grav.z, 1);
 
     const sum = tt.turns.reduce((a, t) => a + t.deg, 0);
     $('total').textContent = (sum >= 0 ? '' : '−') + Math.abs(Math.round(sum)) + '°';

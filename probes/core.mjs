@@ -48,33 +48,47 @@ export class StepDetector {
  * That is deliberately a much easier question than "which way are they facing".
  */
 export class TurnTracker {
-  constructor({ turnThresholdDeg = 60, settleMs = 400, moveRateDeg = 25, bias = 0 } = {}) {
-    Object.assign(this, { turnThresholdDeg, settleMs, moveRateDeg, bias });
+  /**
+   * @param turnThresholdDeg  net rotation that counts as a turn
+   * @param windowMs          how far back to measure NET rotation
+   * @param settleDeg         net rotation under this, across the window, = stopped
+   */
+  // windowMs defaults to 1000 for a physical reason: walking cadence is about
+  // 2 steps/sec, so the body sways at ~1 Hz. A one-second window spans exactly
+  // one full sway, which cancels to zero net rotation however big the sway is.
+  constructor({ turnThresholdDeg = 50, windowMs = 1000, settleDeg = 15 } = {}) {
+    Object.assign(this, { turnThresholdDeg, windowMs, settleDeg });
     this.reset();
   }
 
   reset() {
     this.yaw = 0;
     this.turns = [];
+    this._hist = [];
     this._segStart = 0;
-    this._lastMoveAt = 0;
+    this._turning = false;
   }
 
-  /** alphaRate = rotationRate.alpha in deg/s (yaw when the phone is flat, screen up). */
-  push(alphaRate, dtSec, tMs) {
-    const rate = (alphaRate || 0) - this.bias;
-    this.yaw += rate * dtSec;
+  /** yawRate in deg/s about TRUE vertical -- use yawRateAboutVertical() to get it. */
+  push(yawRate, dtSec, tMs) {
+    this.yaw += (yawRate || 0) * dtSec;
 
-    if (Math.abs(rate) > this.moveRateDeg) {
-      this._lastMoveAt = tMs;
-      return null;
-    }
+    this._hist.push({ t: tMs, y: this.yaw });
+    while (this._hist.length > 1 && tMs - this._hist[0].t > this.windowMs) this._hist.shift();
 
-    // Rotation settled -- decide whether the swing since the last settle was a turn.
-    if (this._lastMoveAt && tMs - this._lastMoveAt > this.settleMs) {
+    // NET rotation over the window, not instantaneous rate. This is the whole
+    // trick: an arm swinging while you walk rotates one way then back, so its
+    // net contribution is ~0 and it reads as standing still. A real turn keeps
+    // going the same way, so net rotation grows. Watching instantaneous rate
+    // instead can never separate the two -- walking noise alone reaches 60 deg/s.
+    const net = this.yaw - this._hist[0].y;
+
+    if (Math.abs(net) > this.settleDeg) { this._turning = true; return null; }
+
+    if (this._turning) {
+      this._turning = false;
       const delta = this.yaw - this._segStart;
       this._segStart = this.yaw;
-      this._lastMoveAt = 0;
       if (Math.abs(delta) >= this.turnThresholdDeg) {
         const turn = { dir: delta > 0 ? 'L' : 'R', deg: Math.round(delta), at: tMs };
         this.turns.push(turn);
@@ -85,11 +99,164 @@ export class TurnTracker {
   }
 }
 
-/** Estimates gyro drift (deg/s) from a stretch of samples recorded while stationary. */
+/**
+ * Yaw rate about TRUE vertical, whatever angle the phone is held at.
+ *
+ * The naive approach reads rotationRate.alpha, which is rotation about the axis
+ * sticking out of the screen. That only equals "turning left/right" when the
+ * phone lies flat like a tray. Tilt it up to read it -- which everyone does --
+ * and the turn signal bleeds into gamma instead, so alpha reads near zero and
+ * turns vanish.
+ *
+ * The fix: the accelerometer already tells us which way is down, because gravity
+ * dominates it. Normalise that to a unit vector and project the rotation-rate
+ * vector onto it. What survives is rotation about the real-world vertical axis,
+ * which is exactly what "turning" means, at any phone angle.
+ *
+ * Axis mapping is easy to get wrong: rotationRate.beta is about x, .gamma about
+ * y, .alpha about z. The leading minus matches WebKit's convention, where a
+ * device resting screen-up reports roughly z = -9.8.
+ */
+/**
+ * Pulls the gravity direction out of a noisy accelerometer stream.
+ *
+ * accelerationIncludingGravity is gravity PLUS whatever you're doing. Standing
+ * still those are the same thing, so the raw reading points straight down. Walking
+ * adds several m/s2 of footfall and sway, and the raw vector lurches around with
+ * every step.
+ *
+ * Gravity is the one part that never changes, so a slow low-pass keeps it and
+ * discards the rest. Everything downstream needs a stable "down" to measure
+ * against -- feed it the raw vector and the reference axis wobbles once per step,
+ * which quietly destroys the yaw estimate.
+ */
+export class GravityFilter {
+  /** @param tau seconds of smoothing. ~0.7 keeps gravity, kills walking motion. */
+  constructor(tau = 0.7) { this.tau = tau; this.x = 0; this.y = 0; this.z = 0; this._init = false; }
+
+  push(accel, dtSec) {
+    const ax = accel?.x || 0, ay = accel?.y || 0, az = accel?.z || 0;
+    if (!this._init) { this.x = ax; this.y = ay; this.z = az; this._init = true; return this; }
+    const a = Math.min(1, dtSec / this.tau);
+    this.x += a * (ax - this.x);
+    this.y += a * (ay - this.y);
+    this.z += a * (az - this.z);
+    return this;
+  }
+}
+
+/**
+ * Candidate mappings from the named rotationRate fields onto physical axes.
+ *
+ * The spec says alpha is rotation about z, beta about x, gamma about y. Real
+ * devices do not all agree. On the iPhone this was tested against, gravity sits
+ * squarely on z while body turns show up in GAMMA -- so gamma is that device's
+ * z-axis rotation, and reading alpha gets you nothing but noise.
+ *
+ * Each entry returns [wx, wy, wz].
+ */
+export const AXIS_MAPS = {
+  spec: (r) => [r.beta || 0, r.gamma || 0, r.alpha || 0],
+  altA: (r) => [r.alpha || 0, r.beta || 0, r.gamma || 0],
+  altB: (r) => [r.gamma || 0, r.beta || 0, r.alpha || 0],
+  altC: (r) => [r.beta || 0, r.alpha || 0, r.gamma || 0],
+};
+
+/**
+ * Works out which mapping a device actually uses, from physics alone.
+ *
+ * As a device rotates, the gravity vector measured in DEVICE coordinates rotates
+ * the opposite way:   dg/dt = -(omega x g)
+ *
+ * Both sides are measurable -- gravity from the accelerometer, omega from the
+ * gyroscope -- so we can score each candidate mapping by how well it predicts
+ * the gravity motion we actually observed, and keep the winner. No user-agent
+ * sniffing, no hardcoded per-platform table, and it stays correct on hardware
+ * that didn't exist when this was written.
+ *
+ * Only samples taken while genuinely rotating count: standing still, every
+ * mapping predicts "gravity isn't moving" and the comparison is pure noise.
+ */
+export class AxisResolver {
+  // Lock in fast. The winning mapping beats the others by ~4x, so a handful of
+  // rotating samples is plenty -- and every sample spent deciding is a sample
+  // measured with the wrong axis, which is how the very first turn gets lost.
+  constructor({ gateDeg = 45, minSamples = 15 } = {}) {
+    this.gateDeg = gateDeg;
+    this.minSamples = minSamples;
+    this.names = Object.keys(AXIS_MAPS);
+    this.err = Object.fromEntries(this.names.map((n) => [n, 0]));
+    this.n = 0;
+    this._prev = null;
+  }
+
+  push(rot, grav, dtSec) {
+    const g = { x: grav?.x || 0, y: grav?.y || 0, z: grav?.z || 0 };
+    const prev = this._prev;
+    this._prev = g;
+    if (!prev || dtSec <= 0) return;
+
+    if (Math.hypot(rot?.alpha || 0, rot?.beta || 0, rot?.gamma || 0) < this.gateDeg) return;
+
+    const D = Math.PI / 180;
+    const obs = [(g.x - prev.x) / dtSec, (g.y - prev.y) / dtSec, (g.z - prev.z) / dtSec];
+
+    for (const name of this.names) {
+      const [wx, wy, wz] = AXIS_MAPS[name](rot).map((v) => v * D);
+      const pred = [
+        -(wy * prev.z - wz * prev.y),
+        -(wz * prev.x - wx * prev.z),
+        -(wx * prev.y - wy * prev.x),
+      ];
+      this.err[name] += Math.hypot(pred[0] - obs[0], pred[1] - obs[1], pred[2] - obs[2]);
+    }
+    this.n++;
+  }
+
+  /** Until enough rotation has been seen, fall back to the spec mapping. */
+  get confident() { return this.n >= this.minSamples; }
+  get name() {
+    if (!this.confident) return 'spec';
+    return this.names.reduce((a, b) => (this.err[b] < this.err[a] ? b : a));
+  }
+  get map() { return AXIS_MAPS[this.name]; }
+}
+
+export function yawRateAboutVertical(rot, accel, bias = null, mapFn = AXIS_MAPS.spec) {
+  const ax = accel?.x || 0, ay = accel?.y || 0, az = accel?.z || 0;
+  const mag = Math.hypot(ax, ay, az);
+  if (mag < 1e-6) return 0;
+
+  // Bias comes off each NAMED axis first -- it's measured in that space. Only
+  // then do we map onto physical axes and project. Correcting the projected
+  // scalar instead only holds at the tilt it was measured at.
+  const d = {
+    alpha: (rot?.alpha || 0) - (bias?.alpha || 0),
+    beta: (rot?.beta || 0) - (bias?.beta || 0),
+    gamma: (rot?.gamma || 0) - (bias?.gamma || 0),
+  };
+  const [wx, wy, wz] = mapFn(d);
+
+  return -((wx * ax + wy * ay + wz * az) / mag);
+}
+
+/**
+ * Estimates gyro drift from a stretch of samples recorded while stationary.
+ * Returns deg/s PER AXIS -- bias differs between axes, and a single averaged
+ * number only cancels out at the exact tilt it was measured at.
+ */
 export function estimateGyroBias(samples, { fromMs = 0, toMs = Infinity } = {}) {
-  const slice = samples.filter((s) => s.t >= fromMs && s.t <= toMs);
-  if (!slice.length) return 0;
-  return slice.reduce((acc, s) => acc + (s.ra || 0), 0) / slice.length;
+  if (!samples.length) return { alpha: 0, beta: 0, gamma: 0 };
+  // Window is relative to the FIRST sample. record.html timestamps start at 0,
+  // but turns.html stores raw e.timeStamp, which starts wherever the page did.
+  const t0 = samples[0].t;
+  const slice = samples.filter((s) => s.t - t0 >= fromMs && s.t - t0 <= toMs);
+  if (!slice.length) return { alpha: 0, beta: 0, gamma: 0 };
+  const sum = slice.reduce(
+    (a, s) => ({ alpha: a.alpha + (s.ra || 0), beta: a.beta + (s.rb || 0), gamma: a.gamma + (s.rg || 0) }),
+    { alpha: 0, beta: 0, gamma: 0 },
+  );
+  return { alpha: sum.alpha / slice.length, beta: sum.beta / slice.length, gamma: sum.gamma / slice.length };
 }
 
 // ---------------------------------------------------------------------------

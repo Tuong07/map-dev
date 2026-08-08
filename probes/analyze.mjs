@@ -7,7 +7,10 @@
 //   node probes/analyze.mjs walk-01.json --high 11.4 --gap 300 --truth 100
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { StepDetector, TurnTracker, estimateGyroBias } from './core.mjs';
+import {
+  StepDetector, TurnTracker, estimateGyroBias,
+  yawRateAboutVertical, GravityFilter, AxisResolver,
+} from './core.mjs';
 
 const argv = process.argv.slice(2);
 const file = argv.find((a) => !a.startsWith('--'));
@@ -23,28 +26,39 @@ if (!file) {
 }
 
 const rec = JSON.parse(readFileSync(file, 'utf8'));
-const S = rec.samples || [];
+// record.html writes `samples`; the turns.html walk dump writes `trace`.
+const S = rec.samples || rec.trace || [];
 if (!S.length) { console.error('No samples in that file.'); process.exit(1); }
 
 const truth = flag('truth', rec.groundTruthSteps ?? null);
 const durSec = S[S.length - 1].t / 1000;
 const hz = S.length / durSec;
 
-// The first 2 s of a recording is someone holding the phone still after tapping
-// start -- good enough to read the gyro's resting drift off.
-const bias = estimateGyroBias(S, { fromMs: 0, toMs: 2000 });
+// turns.html already measured bias properly, during a deliberate 10 s hold --
+// trust that over re-deriving it. For record.html files there's no stored value,
+// so fall back to the opening 2 s, which is someone standing still after tapping
+// start. That fallback is only as good as how still they actually were.
+const bias = rec.gyroBias || estimateGyroBias(S, { fromMs: 0, toMs: 2000 });
 
 function run(opts) {
   const det = new StepDetector(opts);
-  const tt = new TurnTracker({ bias });
+  const tt = new TurnTracker();
+  const grav = new GravityFilter(0.7);
+  const axes = new AxisResolver();
   let last = 0;
   for (const s of S) {
-    const dt = last ? Math.min((s.t - last) / 1000, 0.1) : 1 / hz;
+    const dt = last ? Math.max(0, Math.min((s.t - last) / 1000, 0.1)) : 1 / hz;
     last = s.t;
+    const accel = { x: s.ax, y: s.ay, z: s.az };
+    const rot = { alpha: s.ra, beta: s.rb, gamma: s.rg };
+
+    // Mirror the browser pipeline exactly, or tuning here won't transfer there.
+    grav.push(accel, dt);
+    axes.push(rot, grav, dt);
     det.push(s.ax, s.ay, s.az, s.t);
-    tt.push(s.ra, dt, s.t);
+    tt.push(yawRateAboutVertical(rot, grav, bias, axes.map), dt, s.t);
   }
-  return { steps: det.steps, turns: tt.turns, yaw: tt.yaw };
+  return { steps: det.steps, turns: tt.turns, yaw: tt.yaw, axis: axes.name };
 }
 
 const pad = (s, n) => String(s).padEnd(n);
@@ -57,7 +71,9 @@ console.log(`  ${pad('file', 18)}${rec.label || file}`);
 console.log(`  ${pad('recorded', 18)}${rec.recordedAt || '—'}`);
 console.log(`  ${pad('duration', 18)}${durSec.toFixed(1)} s`);
 console.log(`  ${pad('samples', 18)}${S.length}  ${dim(`(${hz.toFixed(0)} Hz)`)}`);
-console.log(`  ${pad('gyro bias', 18)}${bias.toFixed(3)} deg/s  ${dim(`(${(Math.abs(bias) * 60).toFixed(0)} deg drift/min)`)}`);
+const biasMag = Math.hypot(bias.alpha, bias.beta, bias.gamma);
+console.log(`  ${pad('gyro bias a/b/g', 18)}${bias.alpha.toFixed(2)} / ${bias.beta.toFixed(2)} / ${bias.gamma.toFixed(2)} deg/s  ${dim(`(${(biasMag * 60).toFixed(0)} deg drift/min)`)}`);
+console.log(`  ${pad('gyro axis map', 18)}${run({}).axis}`);
 console.log('');
 
 if (has('sweep')) {
