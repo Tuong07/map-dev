@@ -19,7 +19,28 @@ type TNode = {
   vertical?: string;    // "STAIR 4" -- shared label links floors
 };
 type TEdge = { id: string; from: string; to: string; kind: 'hallway' | 'stair' | 'elevator' | 'door' };
-type Graph = { nodes: TNode[]; edges: TEdge[]; roomDoor: Record<string, string> };
+
+/**
+ * What you draw is kept apart from what auto-link generates.
+ *
+ * `nodes`/`edges` are the skeleton -- only ever changed by clicking. `doors`,
+ * `doorEdges` and `roomDoor` are derived, and auto-link throws them away and
+ * rebuilds them from the skeleton every time.
+ *
+ * The first version mutated one shared graph: auto-link split the hallway edges
+ * in place and left the door nodes behind. Running it a second time then treated
+ * those door-to-door segments as fresh corridors AND restarted door numbering at
+ * D001, so the new doors collided with the old ones -- self-edges, and 92 m
+ * "corridors" spanning the whole building. Separating the two makes re-running
+ * naturally idempotent instead of quietly destructive.
+ */
+type Graph = {
+  nodes: TNode[];
+  edges: TEdge[];
+  doors: TNode[];
+  doorEdges: TEdge[];
+  roomDoor: Record<string, string>;
+};
 
 type RawRoom = { number: string; type: string; px: { x: number; y: number }; confidence: number };
 type Raw = {
@@ -28,7 +49,60 @@ type Raw = {
   pixelsPerMetre: number; rooms: RawRoom[];
 };
 
-const EMPTY: Graph = { nodes: [], edges: [], roomDoor: {} };
+const EMPTY: Graph = { nodes: [], edges: [], doors: [], doorEdges: [], roomDoor: {} };
+
+/** Everything drawn plus everything derived, for rendering and saving. */
+const allNodes = (g: Graph) => [...g.nodes, ...g.doors];
+/** Once doors exist they carry the split hallway chain, replacing the raw edges. */
+const allEdges = (g: Graph) => (g.doorEdges.length ? g.doorEdges : g.edges);
+
+/**
+ * Older traces stored doors inside `nodes` and split the hallway edges in place.
+ * Recover the skeleton: keep the drawn nodes, and reconnect any two of them that
+ * were joined through a chain of door nodes.
+ */
+function migrate(t: any): Graph {
+  if (!t) return EMPTY;
+  if (Array.isArray(t.doors)) return { ...EMPTY, ...t };
+
+  // A trace written before the split had auto-link run more than once will
+  // contain duplicate node ids. Adjacency is then ambiguous -- walking a chain
+  // can step onto the wrong namesake -- and the "recovered" skeleton comes out
+  // as diagonals crossing the building. Better to admit it is unrecoverable
+  // than to hand back a plausible-looking wrong map.
+  const ids = (t.nodes ?? []).map((n: TNode) => n.id);
+  if (new Set(ids).size !== ids.length) return EMPTY;
+
+  const drawn: TNode[] = (t.nodes ?? []).filter((n: TNode) => n.type !== 'door');
+  const drawnIds = new Set(drawn.map((n) => n.id));
+  const adj = new Map<string, string[]>();
+  for (const e of t.edges ?? []) {
+    if (e.from === e.to) continue;                    // drop the self-edges
+    (adj.get(e.from) ?? adj.set(e.from, []).get(e.from)!).push(e.to);
+    (adj.get(e.to) ?? adj.set(e.to, []).get(e.to)!).push(e.from);
+  }
+
+  const edges: TEdge[] = [];
+  const seenPair = new Set<string>();
+  for (const start of drawn) {
+    // Walk outward; any drawn node reachable only through doors was originally
+    // a direct neighbour.
+    for (const first of adj.get(start.id) ?? []) {
+      let prev = start.id, cur = first, guard = 0;
+      while (!drawnIds.has(cur) && guard++ < 500) {
+        const next = (adj.get(cur) ?? []).find((x) => x !== prev);
+        if (!next) break;
+        prev = cur; cur = next;
+      }
+      if (!drawnIds.has(cur) || cur === start.id) continue;
+      const key = [start.id, cur].sort().join('|');
+      if (seenPair.has(key)) continue;
+      seenPair.add(key);
+      edges.push({ id: `E${String(edges.length + 1).padStart(3, '0')}`, from: start.id, to: cur, kind: 'hallway' });
+    }
+  }
+  return { nodes: drawn, edges, doors: [], doorEdges: [], roomDoor: {} };
+}
 const M_PER_DEG_LAT = 110540, M_PER_DEG_LON = 111320;
 
 export default function TracerCanvas({ building, floor }: { building: string; floor: number }) {
@@ -53,8 +127,15 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
         if (d.error) { setError(d.error); return; }
         setRaw(d.raw);
         setView({ x: 0, y: 0, w: d.raw.image.width, h: d.raw.image.height });
-        if (d.trace) { setGraph(d.trace); setStatus('Loaded saved trace'); }
-        else { setGraph(EMPTY); }
+        if (d.trace) {
+          const g = migrate(d.trace);
+          setGraph(g);
+          setStatus(
+            Array.isArray(d.trace.doors) ? 'Loaded saved trace'
+            : g.nodes.length ? `Repaired old trace — ${g.nodes.length} points, re-run Auto-link`
+            : 'Old trace was corrupted by the duplicate-id bug — starting fresh',
+          );
+        } else { setGraph(EMPTY); }
         setHistory([]);
       })
       .catch((e) => setError(String(e)));
@@ -111,15 +192,21 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     };
   };
 
-  const nodeAt = (p: { x: number; y: number }, tolPx: number) =>
-    graph.nodes.find((n) => Math.hypot(n.x - p.x, n.y - p.y) < tolPx);
+  /**
+   * Drawing only ever snaps to nodes YOU placed -- joining a corridor to a
+   * generated door would put derived data back into the skeleton and undo the
+   * separation. Re-linking is the exception: there you're choosing a door.
+   */
+  const nodeAt = (p: { x: number; y: number }, tolPx: number, includeDoors = false) =>
+    (includeDoors ? allNodes(graph) : graph.nodes)
+      .find((n) => Math.hypot(n.x - p.x, n.y - p.y) < tolPx);
 
   // --- drawing --------------------------------------------------------------
   const onClick = (evt: React.MouseEvent) => {
     if (!raw || pan.current) return;
     const p = toImage(evt);
     const tol = (view.w / 1000) * 12;
-    const hit = nodeAt(p, tol);
+    const hit = nodeAt(p, tol, !!relinking);
 
     if (relinking) {
       // Second click of a re-link: attach the chosen room to this node.
@@ -211,8 +298,9 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
 
     // Each door becomes a real node ON the corridor, which means splitting the
     // segment it landed on. Sorting by t keeps the rebuilt chain in order.
-    const nodes = [...graph.nodes];
-    const edges = graph.edges.filter((e) => e.kind !== 'hallway');
+    // These arrays start EMPTY every run -- that is what makes re-running safe.
+    const doors: TNode[] = [];
+    const doorEdges: TEdge[] = [];
     const roomDoor: Record<string, string> = {};
     const bySeg = new Map<string, typeof links>();
     for (const l of links) {
@@ -226,15 +314,15 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       let prev = seg.from;
       for (const l of on) {
         const id = `D${String(++seq).padStart(3, '0')}`;
-        nodes.push({ id, x: l.point.x, y: l.point.y, type: 'door' });
-        edges.push({ id: `E${id}a`, from: prev, to: id, kind: 'hallway' });
+        doors.push({ id, x: l.point.x, y: l.point.y, type: 'door' });
+        doorEdges.push({ id: `E${id}a`, from: prev, to: id, kind: 'hallway' });
         roomDoor[l.roomNumber] = id;
         prev = id;
       }
-      edges.push({ id: `E${seg.id}z`, from: prev, to: seg.to, kind: 'hallway' });
+      doorEdges.push({ id: `E${seg.id}z`, from: prev, to: seg.to, kind: 'hallway' });
     }
 
-    commit({ nodes, edges, roomDoor },
+    commit({ ...graph, doors, doorEdges, roomDoor },
       `Linked ${links.length} rooms${unlinked.length ? `, ${unlinked.length} too far` : ''}`);
   };
 
@@ -246,8 +334,8 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     for (const r of raw.rooms) {
       if (!linked.has(r.number)) out.push({ kind: 'unlinked', detail: `${r.number} has no door`, room: r.number });
     }
-    const used = new Set(graph.edges.flatMap((e) => [e.from, e.to]));
-    for (const n of graph.nodes) {
+    const used = new Set(allEdges(graph).flatMap((e) => [e.from, e.to]));
+    for (const n of allNodes(graph)) {
       if (!used.has(n.id)) out.push({ kind: 'orphan', detail: `${n.id} connects to nothing` });
     }
     for (const r of raw.rooms) {
@@ -268,13 +356,13 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       lon: +(raw.origin.lon + (n.x / ppm) / (M_PER_DEG_LON * cosLat)).toFixed(8),
     });
 
-    const nodes = graph.nodes.map((n) => ({
+    const nodes = allNodes(graph).map((n) => ({
       id: `W${raw.floor}-${n.id}`, ...toLL(n),
       floor: raw.floor, elevation: (raw.floor - 1) * 4.2,
       type: n.type, ...(n.vertical ? { vertical: n.vertical } : {}),
     }));
-    const pos = new Map(graph.nodes.map((n) => [n.id, n]));
-    const edges = graph.edges.map((e) => {
+    const pos = new Map(allNodes(graph).map((n) => [n.id, n]));
+    const edges = allEdges(graph).map((e) => {
       const a = pos.get(e.from)!, b = pos.get(e.to)!;
       return {
         id: `W${raw.floor}-${e.id}`, from: `W${raw.floor}-${e.from}`, to: `W${raw.floor}-${e.to}`,
@@ -298,7 +386,9 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
   if (error) return <div className="p-8 text-red-600 font-mono text-sm">{error}</div>;
   if (!raw) return <div className="p-8 text-neutral-500">Loading…</div>;
 
-  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  const byId = new Map(allNodes(graph).map((n) => [n.id, n]));
+  const drawnEdges = allEdges(graph);
+  const drawnNodes = allNodes(graph);
   const doorOf = new Map(Object.entries(graph.roomDoor).map(([room, node]) => [node, room]));
   const r = view.w / 1000;
 
@@ -328,14 +418,14 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
               className={graph.roomDoor[room.number] ? 'fill-emerald-500/60' : 'fill-red-500/70'} />
           ))}
 
-          {graph.edges.map((e) => {
+          {drawnEdges.map((e) => {
             const a = byId.get(e.from), b = byId.get(e.to);
             if (!a || !b) return null;
             return <line key={e.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
               strokeWidth={2.5 * r} className="stroke-blue-600" />;
           })}
 
-          {graph.nodes.map((n) => {
+          {drawnNodes.map((n) => {
             const room = doorOf.get(n.id);
             const isRun = n.id === runFrom;
             const fill = n.type === 'door' ? 'fill-white'
@@ -418,7 +508,7 @@ function SidePanel(p: {
   return (
     <aside className="w-80 shrink-0 overflow-y-auto border-l border-neutral-300 bg-white p-3 text-sm">
       <div className="mb-3 grid grid-cols-2 gap-2">
-        {[['nodes', p.graph.nodes.length], ['edges', p.graph.edges.length],
+        {[['nodes', p.graph.nodes.length + p.graph.doors.length], ['edges', (p.graph.doorEdges.length || p.graph.edges.length)],
           ['rooms', p.raw.rooms.length], ['linked', linked]].map(([k, v]) => (
           <div key={k as string} className="rounded bg-neutral-100 px-2 py-1.5">
             <div className="text-xs text-neutral-500">{k}</div>
