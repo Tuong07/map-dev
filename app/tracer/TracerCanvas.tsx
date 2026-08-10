@@ -296,16 +296,22 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     });
   };
   const onMouseMove = (evt: React.MouseEvent) => {
-    if (!pan.current || !svgRef.current) return;
+    // Read everything we need NOW, into plain locals.
+    //
+    // The updater passed to setView runs whenever React chooses, which can be
+    // after endPan has already nulled pan.current -- so reading the ref inside
+    // the updater crashes on a drag that ends between the two. Same for the
+    // event: capture the numbers, not the object.
+    const start = pan.current;
+    if (!start || !svgRef.current) return;
     const r = svgRef.current.getBoundingClientRect();
-    // Same uniform scale the SVG uses, so the map tracks the cursor exactly.
+    const dx = evt.clientX - start.x;
+    const dy = evt.clientY - start.y;
+
     setView((v) => {
+      // Same uniform scale the SVG uses, so the map tracks the cursor exactly.
       const scale = Math.min(r.width / v.w, r.height / v.h);
-      return {
-        ...v,
-        x: pan.current!.vx - (evt.clientX - pan.current!.x) / scale,
-        y: pan.current!.vy - (evt.clientY - pan.current!.y) / scale,
-      };
+      return { ...v, x: start.vx - dx / scale, y: start.vy - dy / scale };
     });
   };
   const endPan = () => { setTimeout(() => { pan.current = null; }, 0); };
