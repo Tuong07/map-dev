@@ -3,367 +3,367 @@
     "number": "1-001",
     "type": "VESTIBULE",
     "floor": 1,
-    "doorNodeId": "W1-D001"
+    "doorNodeId": "W1-D067"
   },
   {
     "number": "1-002A",
     "type": "LOBBY",
     "floor": 1,
-    "doorNodeId": "W1-D002"
+    "doorNodeId": "W1-D068"
   },
   {
     "number": "1-003",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D006"
+    "doorNodeId": "W1-D070"
   },
   {
     "number": "1-003A",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D009"
+    "doorNodeId": "W1-D073"
   },
   {
     "number": "1-003B",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D008"
+    "doorNodeId": "W1-D072"
   },
   {
     "number": "1-003F",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D005"
+    "doorNodeId": "W1-D069"
   },
   {
     "number": "1-003G",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D007"
+    "doorNodeId": "W1-D071"
   },
   {
     "number": "1-004",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D010"
+    "doorNodeId": "W1-D074"
   },
   {
     "number": "1-005",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D011"
+    "doorNodeId": "W1-D075"
   },
   {
     "number": "1-006",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D012"
+    "doorNodeId": "W1-D076"
   },
   {
     "number": "1-009",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D004"
+    "doorNodeId": "W1-D062"
   },
   {
     "number": "1-010",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D003"
+    "doorNodeId": "W1-D061"
   },
   {
     "number": "1-018",
     "type": "RESTROOM",
     "floor": 1,
-    "doorNodeId": "W1-D013"
+    "doorNodeId": "W1-D001"
   },
   {
     "number": "1-020",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D016"
+    "doorNodeId": "W1-D004"
   },
   {
     "number": "1-025",
     "type": "ELEC",
     "floor": 1,
-    "doorNodeId": "W1-D075"
+    "doorNodeId": "W1-D048"
   },
   {
     "number": "1-031",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D019"
+    "doorNodeId": "W1-D064"
   },
   {
     "number": "1-037",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D020"
+    "doorNodeId": "W1-D065"
   },
   {
     "number": "1-038",
     "type": "SERVICE",
     "floor": 1,
-    "doorNodeId": "W1-D021"
+    "doorNodeId": "W1-D006"
   },
   {
     "number": "1-039",
     "type": "SERVICE",
     "floor": 1,
-    "doorNodeId": "W1-D018"
+    "doorNodeId": "W1-D063"
   },
   {
     "number": "1-041",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D017"
+    "doorNodeId": "W1-D005"
   },
   {
     "number": "1-042",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D026"
+    "doorNodeId": "W1-D011"
   },
   {
     "number": "1-043",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D027"
+    "doorNodeId": "W1-D012"
   },
   {
     "number": "1-044",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D023"
+    "doorNodeId": "W1-D008"
   },
   {
     "number": "1-045",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D022"
+    "doorNodeId": "W1-D007"
   },
   {
     "number": "1-046",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D024"
+    "doorNodeId": "W1-D009"
   },
   {
     "number": "1-047",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D025"
+    "doorNodeId": "W1-D010"
   },
   {
     "number": "1-048",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D033"
+    "doorNodeId": "W1-D018"
   },
   {
     "number": "1-050A",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D031"
+    "doorNodeId": "W1-D016"
   },
   {
     "number": "1-050B",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D029"
+    "doorNodeId": "W1-D014"
   },
   {
     "number": "1-051A",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D032"
+    "doorNodeId": "W1-D017"
   },
   {
     "number": "1-051B",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D028"
+    "doorNodeId": "W1-D013"
   },
   {
     "number": "1-052",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D030"
+    "doorNodeId": "W1-D015"
   },
   {
     "number": "1-053",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D038"
+    "doorNodeId": "W1-D024"
   },
   {
     "number": "1-054",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D034"
+    "doorNodeId": "W1-D019"
   },
   {
     "number": "1-055",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D035"
+    "doorNodeId": "W1-D020"
   },
   {
     "number": "1-057",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D074"
+    "doorNodeId": "W1-D047"
   },
   {
     "number": "1-060",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D073"
+    "doorNodeId": "W1-D046"
   },
   {
     "number": "1-061",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D037"
+    "doorNodeId": "W1-D022"
   },
   {
     "number": "1-062",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D036"
+    "doorNodeId": "W1-D021"
   },
   {
     "number": "1-063",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D039"
+    "doorNodeId": "W1-D025"
   },
   {
     "number": "1-064",
     "type": "CLASSROOM",
     "floor": 1,
-    "doorNodeId": "W1-D050"
+    "doorNodeId": "W1-D026"
   },
   {
     "number": "1-067",
     "type": "ELEV",
     "floor": 1,
-    "doorNodeId": "W1-D015"
+    "doorNodeId": "W1-D003"
   },
   {
     "number": "1-068",
     "type": "ELEV",
     "floor": 1,
-    "doorNodeId": "W1-D014"
+    "doorNodeId": "W1-D002"
   },
   {
     "number": "1-071",
     "type": "MECH",
     "floor": 1,
-    "doorNodeId": "W1-D047"
+    "doorNodeId": "W1-D056"
   },
   {
     "number": "1-072",
     "type": "WOMEN",
     "floor": 1,
-    "doorNodeId": "W1-D040"
+    "doorNodeId": "W1-D054"
   },
   {
     "number": "1-073",
     "type": "MEN",
     "floor": 1,
-    "doorNodeId": "W1-D042"
+    "doorNodeId": "W1-D023"
   },
   {
     "number": "1-074",
     "type": "LOBBY",
     "floor": 1,
-    "doorNodeId": "W1-D049"
+    "doorNodeId": "W1-D058"
   },
   {
     "number": "1-075A",
     "type": "CONF",
     "floor": 1,
-    "doorNodeId": "W1-D051"
+    "doorNodeId": "W1-D027"
   },
   {
     "number": "1-077",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D054"
+    "doorNodeId": "W1-D066"
   },
   {
     "number": "1-077A",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D055"
+    "doorNodeId": "W1-D030"
   },
   {
     "number": "1-077AA",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D052"
+    "doorNodeId": "W1-D028"
   },
   {
     "number": "1-077B",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D057"
+    "doorNodeId": "W1-D032"
   },
   {
     "number": "1-077C",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D061"
+    "doorNodeId": "W1-D034"
   },
   {
     "number": "1-077D",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D062"
+    "doorNodeId": "W1-D035"
   },
   {
     "number": "1-077E",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D056"
+    "doorNodeId": "W1-D031"
   },
   {
     "number": "1-077G",
     "type": "CONF",
     "floor": 1,
-    "doorNodeId": "W1-D063"
+    "doorNodeId": "W1-D036"
   },
   {
     "number": "1-077H",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D064"
+    "doorNodeId": "W1-D037"
   },
   {
     "number": "1-077J",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D065"
+    "doorNodeId": "W1-D038"
   },
   {
     "number": "1-077K",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D067"
+    "doorNodeId": "W1-D040"
   },
   {
     "number": "1-077L",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D068"
+    "doorNodeId": "W1-D041"
   },
   {
     "number": "1-077M",
     "type": "SERVICE",
     "floor": 1,
-    "doorNodeId": "W1-D069"
+    "doorNodeId": "W1-D042"
   },
   {
     "number": "1-077N",
@@ -381,102 +381,102 @@
     "number": "1-077Q",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D070"
+    "doorNodeId": "W1-D043"
   },
   {
     "number": "1-077R",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D058"
+    "doorNodeId": "W1-D033"
   },
   {
     "number": "1-077T",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D045"
+    "doorNodeId": "W1-D079"
   },
   {
     "number": "1-077V",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D071"
+    "doorNodeId": "W1-D044"
   },
   {
     "number": "1-077W",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D044"
+    "doorNodeId": "W1-D078"
   },
   {
     "number": "1-077X",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D046"
+    "doorNodeId": "W1-D080"
   },
   {
     "number": "1-077Y",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D072"
+    "doorNodeId": "W1-D045"
   },
   {
     "number": "1-078",
     "type": "SEMINAR",
     "floor": 1,
-    "doorNodeId": "W1-D043"
+    "doorNodeId": "W1-D077"
   },
   {
     "number": "1-078A",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D053"
+    "doorNodeId": "W1-D029"
   },
   {
     "number": "1-078B",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D048"
+    "doorNodeId": "W1-D057"
   },
   {
     "number": "1-079",
     "type": "LOUNGE",
     "floor": 1,
-    "doorNodeId": "W1-D076"
+    "doorNodeId": "W1-D049"
   },
   {
     "number": "1-085",
     "type": "STAGE",
     "floor": 1,
-    "doorNodeId": "W1-D041"
+    "doorNodeId": "W1-D055"
   },
   {
     "number": "1-088",
     "type": "AUDITORIUM",
     "floor": 1,
-    "doorNodeId": "W1-D078"
+    "doorNodeId": "W1-D051"
   },
   {
     "number": "1-089",
     "type": "STORAGE",
     "floor": 1,
-    "doorNodeId": "W1-D077"
+    "doorNodeId": "W1-D050"
   },
   {
     "number": "1-090",
     "type": "LOUNGE",
     "floor": 1,
-    "doorNodeId": "W1-D080"
+    "doorNodeId": "W1-D053"
   },
   {
     "number": "1-091",
     "type": "MECH",
     "floor": 1,
-    "doorNodeId": "W1-D079"
+    "doorNodeId": "W1-D052"
   },
   {
     "number": "1-771",
     "type": "OFFICE",
     "floor": 1,
-    "doorNodeId": "W1-D066"
+    "doorNodeId": "W1-D039"
   }
 ]
