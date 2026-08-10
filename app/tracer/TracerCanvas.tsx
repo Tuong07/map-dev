@@ -330,6 +330,50 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     (includeDoors ? allNodes(graph) : graph.nodes)
       .find((n) => Math.hypot(n.x - p.x, n.y - p.y) < tolPx);
 
+  /**
+   * Guess which room a door belongs to, from the OCR label positions.
+   *
+   * A door on a wall is usually much closer to its own room's label than to any
+   * other, so the nearest label is right nearly always. The two cases where it
+   * isn't are worth interrupting for:
+   *
+   *   ambiguous - two rooms nearly equally close, e.g. a door on the wall
+   *               between them. The test is RELATIVE, not a fixed distance: a
+   *               door into a large classroom can be 6 m from its own label and
+   *               still unambiguous, while two small offices might both sit 2 m
+   *               away. What matters is the gap between first and second place.
+   *   tooFar    - nothing near enough for the guess to mean anything.
+   */
+  const AMBIGUOUS_RATIO = 1.25;
+  const MAX_ROOM_DIST_M = 15;
+
+  const nearestRoom = (p: { x: number; y: number }) => {
+    if (!raw?.rooms.length) return null;
+    const ranked = raw.rooms
+      .map((r) => ({ room: r.number, d: Math.hypot(r.px.x - p.x, r.px.y - p.y) }))
+      .sort((a, b) => a.d - b.d);
+    const [best, second] = ranked;
+    return {
+      room: best.room,
+      runnerUp: second?.room,
+      tooFar: best.d / raw.pixelsPerMetre > MAX_ROOM_DIST_M,
+      ambiguous: !!second && second.d < best.d * AMBIGUOUS_RATIO,
+    };
+  };
+
+  /** Retype the room on an existing door. Double-click it in Select mode. */
+  const renameDoor = (id: string) => {
+    const door = graph.doors.find((d) => d.id === id);
+    if (!door) return;
+    const room = prompt('Room number for this door', door.room ?? '')?.trim();
+    if (!room) return;
+    commit({
+      ...graph,
+      doors: graph.doors.map((d) =>
+        d.id === id ? { ...d, room, label: `${room} D1` } : d),
+    }, `${id} → ${room}`);
+  };
+
   // --- drawing --------------------------------------------------------------
   const onClick = (evt: React.MouseEvent) => {
     if (!raw || pan.current) return;
@@ -351,7 +395,16 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     }
 
     if (mode === 'door') {
-      const room = prompt('Room number for this door')?.trim();
+      const guess = nearestRoom(p);
+      let room = guess?.room;
+      // Only interrupt when the guess isn't trustworthy: two rooms almost
+      // equally close, or nothing close at all.
+      if (!guess || guess.ambiguous || guess.tooFar) {
+        const why = !guess || guess.tooFar
+          ? 'No room close by — type the room number'
+          : `Too close to call between ${guess.room} and ${guess.runnerUp} — type the room number`;
+        room = prompt(why, guess?.room ?? '')?.trim();
+      }
       if (!room) return;
       const node: TNode = {
         id: nextId(graph, 'D'), x: p.x, y: p.y, type: 'door',
@@ -749,6 +802,11 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
             ? (pan.current ? 'cursor-grabbing' : 'cursor-grab')
             : 'cursor-crosshair'}`}
           onClick={onClick} onWheel={onWheel}
+          onDoubleClick={(evt) => {
+            if (mode !== 'select') return;
+            const hit = nodeAt(toImage(evt), (view.w / 1000) * 12, true);
+            if (hit && graph.doors.some((d) => d.id === hit.id)) renameDoor(hit.id);
+          }}
           onMouseDown={onMouseDown} onMouseMove={onMouseMove}
           onMouseUp={endPan} onMouseLeave={endPan}
           onContextMenu={(e) => e.preventDefault()}
@@ -824,6 +882,7 @@ function Toolbar(p: {
 }) {
   const modes: [Mode, string][] = [
     ['corridor', 'Corridor  C'], ['door', 'Door  D'], ['pan', 'Pan  H'], ['stair', 'Stair  S'],
+
     ['elevator', 'Lift  E'], ['entrance', 'Entrance  N'], ['select', 'Select  V'],
   ];
   return (
@@ -935,6 +994,7 @@ function SidePanel(p: {
         <li className="pt-1"><b>V — select mode</b></li>
         <li>&nbsp;&nbsp;drag a node — move it</li>
         <li>&nbsp;&nbsp;drag a door — slide it along the corridor</li>
+        <li>&nbsp;&nbsp;double-click a door — retype its room</li>
         <li>&nbsp;&nbsp;Backspace — delete the selected node</li>
         <li className="pt-1"><b>hold Space + drag — pan</b> (any mode)</li>
         <li><b>H</b> — pan mode, then plain drag</li>
