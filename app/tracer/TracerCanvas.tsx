@@ -253,10 +253,51 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       setRunFrom(hit.id);
       return;
     }
+
+    // Nothing under the cursor -- but if we're on top of an existing corridor
+    // LINE, join it rather than laying an unconnected point over it.
+    //
+    // Hitting an existing point exactly is hard, and missing it produces two
+    // networks that overlap on screen while sharing nothing. That reads as a
+    // finished map and routes fail everywhere. Snapping to the line makes the
+    // common case -- "this hallway meets that one" -- work by clicking roughly
+    // where they cross.
+    const near = edgeAt(p, tol);
+    if (near) {
+      const { edge: hitEdge, point } = near;
+      const junction: TNode = { id: nextId(graph, 'N'), x: point.x, y: point.y, type: 'junction' };
+      const edges = graph.edges.filter((e) => e.id !== hitEdge.id);
+      edges.push(
+        { ...edge(graph, hitEdge.from, junction.id, hitEdge.kind), id: hitEdge.id + 'a' },
+        { ...edge(graph, junction.id, hitEdge.to, hitEdge.kind), id: hitEdge.id + 'b' },
+      );
+      if (runFrom) edges.push(edge(graph, runFrom, junction.id, 'hallway'));
+      commit({ ...graph, nodes: [...graph.nodes, junction], edges }, 'Joined to corridor');
+      setRunFrom(junction.id);
+      return;
+    }
+
     const node: TNode = { id: nextId(graph, 'N'), x: p.x, y: p.y, type: 'corridor' };
     const edges = runFrom ? [...graph.edges, edge(graph, runFrom, node.id, 'hallway')] : graph.edges;
     commit({ ...graph, nodes: [...graph.nodes, node], edges });
     setRunFrom(node.id);
+  };
+
+  /** Closest drawn corridor line within `tolPx`, and where on it the click fell. */
+  const edgeAt = (p: { x: number; y: number }, tolPx: number) => {
+    const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+    let best: { edge: TEdge; point: { x: number; y: number }; d: number } | null = null;
+    for (const e of graph.edges) {
+      const a = byId.get(e.from), b = byId.get(e.to);
+      if (!a || !b) continue;
+      const proj = projectOntoSegment(p, a, b);
+      // Ignore hits at the very ends -- those are the endpoints, already handled.
+      if (proj.t < 0.05 || proj.t > 0.95) continue;
+      if (proj.distance < tolPx && (!best || proj.distance < best.d)) {
+        best = { edge: e, point: proj.point, d: proj.distance };
+      }
+    }
+    return best;
   };
 
   // --- pan / zoom -----------------------------------------------------------
@@ -366,23 +407,80 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       `Linked ${links.length} rooms${unlinked.length ? `, ${unlinked.length} too far` : ''}`);
   };
 
+  // --- connectivity ---------------------------------------------------------
+  /**
+   * Which island each node belongs to, biggest island first (id 0).
+   *
+   * This is the check that matters most and the one that is impossible to eyeball.
+   * Two corridors drawn so they cross on screen are still two separate networks
+   * unless they share a node -- the map looks finished and routing fails between
+   * every pair of rooms that isn't on the same island.
+   */
+  const islands = useMemo(() => {
+    const nodes = allNodes(graph);
+    const adj = new Map(nodes.map((n) => [n.id, [] as string[]]));
+    for (const e of allEdges(graph)) {
+      adj.get(e.from)?.push(e.to);
+      adj.get(e.to)?.push(e.from);
+    }
+    const of = new Map<string, number>();
+    const groups: string[][] = [];
+    for (const n of nodes) {
+      if (of.has(n.id)) continue;
+      const members: string[] = [];
+      const stack = [n.id];
+      while (stack.length) {
+        const x = stack.pop()!;
+        if (of.has(x)) continue;
+        of.set(x, groups.length);
+        members.push(x);
+        for (const y of adj.get(x) ?? []) if (!of.has(y)) stack.push(y);
+      }
+      groups.push(members);
+    }
+    // Renumber so 0 is the largest -- that's the one everything should join.
+    const order = groups.map((g, i) => i).sort((a, b) => groups[b].length - groups[a].length);
+    const rank = new Map(order.map((old, nu) => [old, nu]));
+    const ofRanked = new Map([...of].map(([id, g]) => [id, rank.get(g)!]));
+    return { of: ofRanked, groups: order.map((i) => groups[i]) };
+  }, [graph]);
+
   // --- problems -------------------------------------------------------------
   const problems = useMemo(() => {
     if (!raw) return [];
-    const out: { kind: string; detail: string; room?: string }[] = [];
+    const out: { kind: string; detail: string; room?: string; nodeId?: string }[] = [];
+
+    if (islands.groups.length > 1) {
+      const stranded = islands.groups.slice(1);
+      const roomsOff = Object.entries(graph.roomDoor)
+        .filter(([, nodeId]) => (islands.of.get(nodeId) ?? 0) !== 0).length;
+      out.push({
+        kind: 'split',
+        detail: `Corridors are in ${islands.groups.length} disconnected pieces — ${roomsOff} rooms unreachable from the main network`,
+      });
+      for (const g of stranded) {
+        const anchor = g.find((id) => !id.startsWith('D')) ?? g[0];
+        out.push({
+          kind: 'split',
+          detail: `Island of ${g.length}: join it near ${anchor}`,
+          nodeId: anchor,
+        });
+      }
+    }
+
     const linked = new Set(Object.keys(graph.roomDoor));
     for (const r of raw.rooms) {
       if (!linked.has(r.number)) out.push({ kind: 'unlinked', detail: `${r.number} has no door`, room: r.number });
     }
     const used = new Set(allEdges(graph).flatMap((e) => [e.from, e.to]));
     for (const n of allNodes(graph)) {
-      if (!used.has(n.id)) out.push({ kind: 'orphan', detail: `${n.id} connects to nothing` });
+      if (!used.has(n.id)) out.push({ kind: 'orphan', detail: `${n.id} connects to nothing`, nodeId: n.id });
     }
     for (const r of raw.rooms) {
       if (r.confidence < 0.9) out.push({ kind: 'ocr', detail: `${r.number} low OCR confidence`, room: r.number });
     }
     return out;
-  }, [raw, graph]);
+  }, [raw, graph, islands]);
 
   // --- save -----------------------------------------------------------------
   const save = async () => {
@@ -462,24 +560,31 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
               className={graph.roomDoor[room.number] ? 'fill-emerald-500/60' : 'fill-red-500/70'} />
           ))}
 
+          {/* Anything not on the main island is drawn in red. Two corridors can
+              cross on screen and still be separate networks, so colour is the
+              only way to see it. */}
           {drawnEdges.map((e) => {
             const a = byId.get(e.from), b = byId.get(e.to);
             if (!a || !b) return null;
+            const off = (islands.of.get(e.from) ?? 0) !== 0;
             return <line key={e.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              strokeWidth={2.5 * r} className="stroke-blue-600" />;
+              strokeWidth={2.5 * r} className={off ? 'stroke-red-500' : 'stroke-blue-600'} />;
           })}
 
           {drawnNodes.map((n) => {
             const room = doorOf.get(n.id);
             const isRun = n.id === runFrom;
+            const off = (islands.of.get(n.id) ?? 0) !== 0;
             const fill = n.type === 'door' ? 'fill-white'
               : n.type === 'stair' ? 'fill-amber-500'
               : n.type === 'elevator' ? 'fill-violet-500'
-              : n.type === 'entrance' ? 'fill-emerald-600' : 'fill-blue-600';
+              : n.type === 'entrance' ? 'fill-emerald-600'
+              : off ? 'fill-red-500' : 'fill-blue-600';
             return (
               <g key={n.id}>
                 <circle cx={n.x} cy={n.y} r={(n.type === 'door' ? 3 : 5) * r}
-                  className={`${fill} stroke-blue-700`} strokeWidth={1.5 * r} />
+                  className={`${fill} ${off ? 'stroke-red-700' : 'stroke-blue-700'}`}
+                  strokeWidth={1.5 * r} />
                 {isRun && <circle cx={n.x} cy={n.y} r={9 * r} className="fill-none stroke-blue-500"
                   strokeWidth={1.5 * r} strokeDasharray={`${3 * r} ${3 * r}`} />}
                 {room && view.w < 2200 && (
@@ -497,6 +602,10 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
           onFocusRoom={(room) => {
             const rm = raw.rooms.find((x) => x.number === room);
             if (rm) setView({ x: rm.px.x - 500, y: rm.px.y - 325, w: 1000, h: 650 });
+          }}
+          onFocusNode={(id) => {
+            const n = allNodes(graph).find((x) => x.id === id);
+            if (n) setView({ x: n.x - 700, y: n.y - 455, w: 1400, h: 910 });
           }}
         />
       </div>
@@ -553,9 +662,11 @@ function Toolbar(p: {
 }
 
 function SidePanel(p: {
-  raw: Raw; graph: Graph; problems: { kind: string; detail: string; room?: string }[];
+  raw: Raw; graph: Graph;
+  problems: { kind: string; detail: string; room?: string; nodeId?: string }[];
   selected: string | null; relinking: string | null;
   onRelink: (room: string | null) => void; onFocusRoom: (room: string) => void;
+  onFocusNode: (id: string) => void;
 }) {
   const linked = Object.keys(p.graph.roomDoor).length;
   return (
@@ -590,6 +701,9 @@ function SidePanel(p: {
                 <button onClick={() => p.onFocusRoom(pr.room!)} className="underline">find</button>
                 <button onClick={() => p.onRelink(pr.room!)} className="underline">link</button>
               </>
+            )}
+            {pr.nodeId && (
+              <button onClick={() => p.onFocusNode(pr.nodeId!)} className="underline">find</button>
             )}
           </li>
         ))}

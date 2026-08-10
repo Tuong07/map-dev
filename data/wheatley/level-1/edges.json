@@ -1,0 +1,765 @@
+[
+  {
+    "id": "W1-ED001a",
+    "from": "W1-N001",
+    "to": "W1-D001",
+    "meters": 1.53,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED002a",
+    "from": "W1-D001",
+    "to": "W1-D002",
+    "meters": 5.94,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED003a",
+    "from": "W1-D002",
+    "to": "W1-D003",
+    "meters": 23.3,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED004a",
+    "from": "W1-D003",
+    "to": "W1-D004",
+    "meters": 4.71,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE001z",
+    "from": "W1-D004",
+    "to": "W1-N002",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED005a",
+    "from": "W1-N003",
+    "to": "W1-D005",
+    "meters": 1.95,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED006a",
+    "from": "W1-D005",
+    "to": "W1-D006",
+    "meters": 3.59,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED007a",
+    "from": "W1-D006",
+    "to": "W1-D007",
+    "meters": 0.02,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED008a",
+    "from": "W1-D007",
+    "to": "W1-D008",
+    "meters": 5.87,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED009a",
+    "from": "W1-D008",
+    "to": "W1-D009",
+    "meters": 0.04,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED010a",
+    "from": "W1-D009",
+    "to": "W1-D010",
+    "meters": 6.35,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED011a",
+    "from": "W1-D010",
+    "to": "W1-D011",
+    "meters": 9.01,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED012a",
+    "from": "W1-D011",
+    "to": "W1-D012",
+    "meters": 9.22,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE002z",
+    "from": "W1-D012",
+    "to": "W1-N004",
+    "meters": 0.33,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED013a",
+    "from": "W1-N005",
+    "to": "W1-D013",
+    "meters": 7.01,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED014a",
+    "from": "W1-D013",
+    "to": "W1-D014",
+    "meters": 0.53,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED015a",
+    "from": "W1-D014",
+    "to": "W1-D015",
+    "meters": 2.7,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED016a",
+    "from": "W1-D015",
+    "to": "W1-D016",
+    "meters": 7.12,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE003z",
+    "from": "W1-D016",
+    "to": "W1-N006",
+    "meters": 4.72,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED017a",
+    "from": "W1-N006",
+    "to": "W1-D017",
+    "meters": 3.69,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE004z",
+    "from": "W1-D017",
+    "to": "W1-N007",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED018a",
+    "from": "W1-N006",
+    "to": "W1-D018",
+    "meters": 14.06,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED019a",
+    "from": "W1-D018",
+    "to": "W1-D019",
+    "meters": 6.49,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED020a",
+    "from": "W1-D019",
+    "to": "W1-D020",
+    "meters": 8.5,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE005z",
+    "from": "W1-D020",
+    "to": "W1-N008",
+    "meters": 3.03,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED021a",
+    "from": "W1-N009",
+    "to": "W1-D021",
+    "meters": 3.71,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED022a",
+    "from": "W1-D021",
+    "to": "W1-D022",
+    "meters": 5.53,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED023a",
+    "from": "W1-D022",
+    "to": "W1-D023",
+    "meters": 0.17,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED024a",
+    "from": "W1-D023",
+    "to": "W1-D024",
+    "meters": 1.9,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED025a",
+    "from": "W1-D024",
+    "to": "W1-D025",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE006z",
+    "from": "W1-D025",
+    "to": "W1-N010",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED026a",
+    "from": "W1-N011",
+    "to": "W1-D026",
+    "meters": 5.87,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED027a",
+    "from": "W1-D026",
+    "to": "W1-D027",
+    "meters": 3.56,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED028a",
+    "from": "W1-D027",
+    "to": "W1-D028",
+    "meters": 2.45,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED029a",
+    "from": "W1-D028",
+    "to": "W1-D029",
+    "meters": 0.05,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED030a",
+    "from": "W1-D029",
+    "to": "W1-D030",
+    "meters": 2.41,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED031a",
+    "from": "W1-D030",
+    "to": "W1-D031",
+    "meters": 0.56,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED032a",
+    "from": "W1-D031",
+    "to": "W1-D032",
+    "meters": 0.01,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED033a",
+    "from": "W1-D032",
+    "to": "W1-D033",
+    "meters": 1.32,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED034a",
+    "from": "W1-D033",
+    "to": "W1-D034",
+    "meters": 6.07,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED035a",
+    "from": "W1-D034",
+    "to": "W1-D035",
+    "meters": 1.12,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED036a",
+    "from": "W1-D035",
+    "to": "W1-D036",
+    "meters": 6.31,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED037a",
+    "from": "W1-D036",
+    "to": "W1-D037",
+    "meters": 0.61,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE007z",
+    "from": "W1-D037",
+    "to": "W1-N012",
+    "meters": 1.45,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE008z",
+    "from": "W1-N012",
+    "to": "W1-N013",
+    "meters": 3.01,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED038a",
+    "from": "W1-N013",
+    "to": "W1-D038",
+    "meters": 8.97,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED039a",
+    "from": "W1-D038",
+    "to": "W1-D039",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE009z",
+    "from": "W1-D039",
+    "to": "W1-N014",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED040a",
+    "from": "W1-N013",
+    "to": "W1-D040",
+    "meters": 4.01,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED041a",
+    "from": "W1-D040",
+    "to": "W1-D041",
+    "meters": 17.01,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE010z",
+    "from": "W1-D041",
+    "to": "W1-N015",
+    "meters": 6.25,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED042a",
+    "from": "W1-N016",
+    "to": "W1-D042",
+    "meters": 3.49,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE011z",
+    "from": "W1-D042",
+    "to": "W1-N017",
+    "meters": 7.44,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED043a",
+    "from": "W1-N017",
+    "to": "W1-D043",
+    "meters": 5.89,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED044a",
+    "from": "W1-D043",
+    "to": "W1-D044",
+    "meters": 4.92,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED045a",
+    "from": "W1-D044",
+    "to": "W1-D045",
+    "meters": 8.22,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED046a",
+    "from": "W1-D045",
+    "to": "W1-D046",
+    "meters": 0.78,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE012z",
+    "from": "W1-D046",
+    "to": "W1-N018",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED047a",
+    "from": "W1-N017",
+    "to": "W1-D047",
+    "meters": 4.57,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED048a",
+    "from": "W1-D047",
+    "to": "W1-D048",
+    "meters": 5.43,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED049a",
+    "from": "W1-D048",
+    "to": "W1-D049",
+    "meters": 0.05,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE013z",
+    "from": "W1-D049",
+    "to": "W1-N019",
+    "meters": 9,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED050a",
+    "from": "W1-N014",
+    "to": "W1-D050",
+    "meters": 3.47,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE014z",
+    "from": "W1-D050",
+    "to": "W1-N019",
+    "meters": 7.23,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED051a",
+    "from": "W1-N020",
+    "to": "W1-D051",
+    "meters": 6.26,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED052a",
+    "from": "W1-D051",
+    "to": "W1-D052",
+    "meters": 0.93,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED053a",
+    "from": "W1-D052",
+    "to": "W1-D053",
+    "meters": 0.51,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE015z",
+    "from": "W1-D053",
+    "to": "W1-N021",
+    "meters": 2.04,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED054a",
+    "from": "W1-N021",
+    "to": "W1-D054",
+    "meters": 2.43,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE016z",
+    "from": "W1-D054",
+    "to": "W1-N022",
+    "meters": 1.37,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED055a",
+    "from": "W1-N022",
+    "to": "W1-D055",
+    "meters": 2.28,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED056a",
+    "from": "W1-D055",
+    "to": "W1-D056",
+    "meters": 1,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED057a",
+    "from": "W1-D056",
+    "to": "W1-D057",
+    "meters": 2.57,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE017z",
+    "from": "W1-D057",
+    "to": "W1-N023",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED058a",
+    "from": "W1-N022",
+    "to": "W1-D058",
+    "meters": 0.46,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE018z",
+    "from": "W1-D058",
+    "to": "W1-N024",
+    "meters": 2.86,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED059a",
+    "from": "W1-N024",
+    "to": "W1-D059",
+    "meters": 6.16,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED060a",
+    "from": "W1-D059",
+    "to": "W1-D060",
+    "meters": 4.39,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE019z",
+    "from": "W1-D060",
+    "to": "W1-N025",
+    "meters": 3.17,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED061a",
+    "from": "W1-N023",
+    "to": "W1-D061",
+    "meters": 0.21,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED062a",
+    "from": "W1-D061",
+    "to": "W1-D062",
+    "meters": 2.77,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED063a",
+    "from": "W1-D062",
+    "to": "W1-D063",
+    "meters": 2.12,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED064a",
+    "from": "W1-D063",
+    "to": "W1-D064",
+    "meters": 3.74,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE020z",
+    "from": "W1-D064",
+    "to": "W1-N026",
+    "meters": 1.07,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED065a",
+    "from": "W1-N026",
+    "to": "W1-D065",
+    "meters": 0.3,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED066a",
+    "from": "W1-D065",
+    "to": "W1-D066",
+    "meters": 0.96,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED067a",
+    "from": "W1-D066",
+    "to": "W1-D067",
+    "meters": 2.3,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED068a",
+    "from": "W1-D067",
+    "to": "W1-D068",
+    "meters": 4.04,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE021z",
+    "from": "W1-D068",
+    "to": "W1-N027",
+    "meters": 0.8,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED069a",
+    "from": "W1-N027",
+    "to": "W1-D069",
+    "meters": 1.66,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE022z",
+    "from": "W1-D069",
+    "to": "W1-N025",
+    "meters": 1.43,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED070a",
+    "from": "W1-N028",
+    "to": "W1-D070",
+    "meters": 2.94,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED071a",
+    "from": "W1-D070",
+    "to": "W1-D071",
+    "meters": 0.05,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED072a",
+    "from": "W1-D071",
+    "to": "W1-D072",
+    "meters": 3.62,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE023z",
+    "from": "W1-D072",
+    "to": "W1-N029",
+    "meters": 2.46,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE024z",
+    "from": "W1-N029",
+    "to": "W1-N030",
+    "meters": 3.17,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED073a",
+    "from": "W1-N031",
+    "to": "W1-D073",
+    "meters": 5.36,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED074a",
+    "from": "W1-D073",
+    "to": "W1-D074",
+    "meters": 4.8,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE025z",
+    "from": "W1-D074",
+    "to": "W1-N032",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED075a",
+    "from": "W1-N033",
+    "to": "W1-D075",
+    "meters": 13.36,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE026z",
+    "from": "W1-D075",
+    "to": "W1-N011",
+    "meters": 8.89,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED076a",
+    "from": "W1-V003",
+    "to": "W1-D076",
+    "meters": 0,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE027z",
+    "from": "W1-D076",
+    "to": "W1-V004",
+    "meters": 4.87,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED077a",
+    "from": "W1-V004",
+    "to": "W1-D077",
+    "meters": 4.93,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE028z",
+    "from": "W1-D077",
+    "to": "W1-V005",
+    "meters": 0.6,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED078a",
+    "from": "W1-V006",
+    "to": "W1-D078",
+    "meters": 12.1,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED079a",
+    "from": "W1-D078",
+    "to": "W1-D079",
+    "meters": 5.33,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-ED080a",
+    "from": "W1-D079",
+    "to": "W1-D080",
+    "meters": 9.86,
+    "kind": "hallway"
+  },
+  {
+    "id": "W1-EE029z",
+    "from": "W1-D080",
+    "to": "W1-V007",
+    "meters": 5.24,
+    "kind": "hallway"
+  }
+]
