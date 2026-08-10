@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { autoLinkRooms, projectOntoSegment, type Segment } from '@/lib/core/autolink';
 
-type Mode = 'corridor' | 'stair' | 'elevator' | 'entrance' | 'select' | 'pan';
+type Mode = 'corridor' | 'door' | 'stair' | 'elevator' | 'entrance' | 'select' | 'pan';
 
 type TNode = {
   id: string;
@@ -17,6 +17,10 @@ type TNode = {
   y: number;
   type: 'corridor' | 'junction' | 'door' | 'stair' | 'elevator' | 'entrance';
   vertical?: string;    // "STAIR 4" -- shared label links floors
+  /** Door nodes only: the room this door belongs to, as typed. */
+  room?: string;
+  /** Door nodes only: display label -- "1-053 D1", "1-053 D2". */
+  label?: string;
 };
 type TEdge = { id: string; from: string; to: string; kind: 'hallway' | 'stair' | 'elevator' | 'door' };
 
@@ -37,9 +41,35 @@ type TEdge = { id: string; from: string; to: string; kind: 'hallway' | 'stair' |
 type Graph = {
   nodes: TNode[];
   edges: TEdge[];
+  /** Placed by hand in Door mode. Each carries the room it serves. */
   doors: TNode[];
   doorEdges: TEdge[];
-  roomDoor: Record<string, string>;
+};
+
+/**
+ * Which doors serve each room.
+ *
+ * Derived from the doors themselves rather than stored, because a room can have
+ * several doors and keeping a second copy of that relationship is how the two
+ * drift apart. The door node is the single source of truth.
+ */
+/**
+ * "1-053 D1" for the first door on a room, "1-053 D2" for the next.
+ *
+ * The suffix is generated rather than typed: a hand-typed D2 on a room that has
+ * no D1, or two doors both called D1, produces data that looks fine and breaks
+ * quietly later.
+ */
+const nextDoorLabel = (g: Graph, room: string) =>
+  `${room} D${g.doors.filter((d) => d.room === room).length + 1}`;
+
+const roomDoors = (g: Graph): Record<string, string[]> => {
+  const out: Record<string, string[]> = {};
+  for (const d of g.doors) {
+    if (!d.room) continue;
+    (out[d.room] ??= []).push(d.id);
+  }
+  return out;
 };
 
 type RawRoom = { number: string; type: string; px: { x: number; y: number }; confidence: number };
@@ -49,12 +79,55 @@ type Raw = {
   pixelsPerMetre: number; rooms: RawRoom[];
 };
 
-const EMPTY: Graph = { nodes: [], edges: [], doors: [], doorEdges: [], roomDoor: {} };
+const EMPTY: Graph = { nodes: [], edges: [], doors: [], doorEdges: [] };
 
 /** Everything drawn plus everything derived, for rendering and saving. */
 const allNodes = (g: Graph) => [...g.nodes, ...g.doors];
 /** Once doors exist they carry the split hallway chain, replacing the raw edges. */
 const allEdges = (g: Graph) => (g.doorEdges.length ? g.doorEdges : g.edges);
+
+/**
+ * Re-thread the door chains after something moved or was deleted.
+ *
+ * Each corridor edge is walked through the doors sitting on it, in order:
+ *   from -> D3 -> D7 -> D1 -> to
+ * Move a door and that order can change; move a corridor point and a door may
+ * now belong to a different edge entirely. Rather than patch the chain, work out
+ * afresh which edge each door is nearest and rebuild every chain.
+ *
+ * Doors are NOT moved here -- only re-ordered and re-parented. Their coordinates
+ * are whatever the drag left them at, which is what makes a drag stick.
+ */
+function rebuildDoorChains(g: Graph): Graph {
+  if (!g.doors.length) return { ...g, doorEdges: [] };
+  const byId = new Map(g.nodes.map((n) => [n.id, n]));
+
+  const onEdge = new Map<string, { door: TNode; t: number }[]>();
+  for (const d of g.doors) {
+    let best: { edgeId: string; t: number; dist: number } | null = null;
+    for (const e of g.edges) {
+      const a = byId.get(e.from), b = byId.get(e.to);
+      if (!a || !b) continue;
+      const p = projectOntoSegment(d, a, b);
+      if (!best || p.distance < best.dist) best = { edgeId: e.id, t: p.t, dist: p.distance };
+    }
+    if (!best) continue;
+    if (!onEdge.has(best.edgeId)) onEdge.set(best.edgeId, []);
+    onEdge.get(best.edgeId)!.push({ door: d, t: best.t });
+  }
+
+  const doorEdges: TEdge[] = [];
+  for (const e of g.edges) {
+    const on = (onEdge.get(e.id) ?? []).sort((p, q) => p.t - q.t);
+    let prev = e.from;
+    for (const { door } of on) {
+      doorEdges.push({ id: `E${e.id}-${door.id}`, from: prev, to: door.id, kind: e.kind });
+      prev = door.id;
+    }
+    doorEdges.push({ id: `E${e.id}-end`, from: prev, to: e.to, kind: e.kind });
+  }
+  return { ...g, doorEdges };
+}
 
 /**
  * Older traces stored doors inside `nodes` and split the hallway edges in place.
@@ -63,7 +136,17 @@ const allEdges = (g: Graph) => (g.doorEdges.length ? g.doorEdges : g.edges);
  */
 function migrate(t: any): Graph {
   if (!t) return EMPTY;
-  if (Array.isArray(t.doors)) return { ...EMPTY, ...t };
+  if (Array.isArray(t.doors)) {
+    // Doors used to record their room in a separate `roomDoor` map. Fold it onto
+    // the door itself so there is one source of truth, and give each a label.
+    const owner = new Map<string, string>();
+    for (const [room, nodeId] of Object.entries(t.roomDoor ?? {})) owner.set(nodeId as string, room);
+    const doors = (t.doors as TNode[]).map((d) => {
+      const room = d.room ?? owner.get(d.id);
+      return room ? { ...d, room, label: d.label ?? `${room} D1` } : d;
+    });
+    return { nodes: t.nodes ?? [], edges: t.edges ?? [], doors, doorEdges: t.doorEdges ?? [] };
+  }
 
   // A trace written before the split had auto-link run more than once will
   // contain duplicate node ids. Adjacency is then ambiguous -- walking a chain
@@ -101,7 +184,7 @@ function migrate(t: any): Graph {
       edges.push({ id: `E${String(edges.length + 1).padStart(3, '0')}`, from: start.id, to: cur, kind: 'hallway' });
     }
   }
-  return { nodes: drawn, edges, doors: [], doorEdges: [], roomDoor: {} };
+  return { nodes: drawn, edges, doors: [], doorEdges: [] };
 }
 const M_PER_DEG_LAT = 110540, M_PER_DEG_LON = 111320;
 
@@ -119,6 +202,9 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
   const [spaceHeld, setSpaceHeld] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const pan = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
+  // `before` is the graph as it was when the gesture started, so the whole drag
+  // undoes as one step instead of fifty.
+  const drag = useRef<{ id: string; isDoor: boolean; before: Graph; moved: boolean } | null>(null);
 
   // --- load -----------------------------------------------------------------
   useEffect(() => {
@@ -158,17 +244,45 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     });
   }, []);
 
+  /**
+   * Remove the selected node. Select mode only, same as dragging.
+   *
+   * Deleting a door also unlinks its room, which puts the room back on the
+   * problems list rather than leaving it pointing at a node that no longer
+   * exists. Deleting a drawn node takes its edges with it -- an edge to nowhere
+   * would strand everything downstream of it.
+   */
+  const deleteSelected = useCallback(() => {
+    if (!selected || mode !== 'select') return;
+    setGraph((g) => {
+      const isDoor = g.doors.some((d) => d.id === selected);
+      setHistory((h) => [...h.slice(-49), g]);
+      if (isDoor) {
+        // The door carries its own room, so removing it removes the link too.
+        return rebuildDoorChains({ ...g, doors: g.doors.filter((d) => d.id !== selected) });
+      }
+      return rebuildDoorChains({
+        ...g,
+        nodes: g.nodes.filter((n) => n.id !== selected),
+        edges: g.edges.filter((e) => e.from !== selected && e.to !== selected),
+      });
+    });
+    setStatus(`Deleted ${selected}`);
+    setSelected(null);
+  }, [selected, mode]);
+
   // --- keyboard -------------------------------------------------------------
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
       if (e.key === 'Escape') { setRunFrom(null); setSelected(null); setRelinking(null); return; }
       if (e.target instanceof HTMLInputElement) return;
+      if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); deleteSelected(); return; }
       // Hold space to pan without leaving the drawing mode -- the convention in
       // every design tool, and it means you never lose your place mid-corridor.
       if (e.code === 'Space') { e.preventDefault(); setSpaceHeld(true); return; }
       const keys: Record<string, Mode> = {
-        c: 'corridor', s: 'stair', e: 'elevator', n: 'entrance', v: 'select', h: 'pan',
+        c: 'corridor', d: 'door', s: 'stair', e: 'elevator', n: 'entrance', v: 'select', h: 'pan',
       };
       if (keys[e.key]) { setMode(keys[e.key]); setRunFrom(null); }
     };
@@ -183,7 +297,7 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [undo]);
+  }, [undo, deleteSelected]);
 
   // --- coordinate helpers ---------------------------------------------------
   /**
@@ -224,10 +338,26 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     const hit = nodeAt(p, tol, !!relinking);
 
     if (relinking) {
-      // Second click of a re-link: attach the chosen room to this node.
-      if (!hit) { setStatus('Click an existing node to attach the room to'); return; }
-      commit({ ...graph, roomDoor: { ...graph.roomDoor, [relinking]: hit.id } }, `${relinking} re-linked`);
+      // Second click of a re-link: reassign an existing door to this room.
+      const door = hit && graph.doors.find((d) => d.id === hit.id);
+      if (!door) { setStatus('Click a door to reassign it to this room'); return; }
+      commit({
+        ...graph,
+        doors: graph.doors.map((d) =>
+          d.id === door.id ? { ...d, room: relinking, label: nextDoorLabel(graph, relinking) } : d),
+      }, `${relinking} re-linked`);
       setRelinking(null);
+      return;
+    }
+
+    if (mode === 'door') {
+      const room = prompt('Room number for this door')?.trim();
+      if (!room) return;
+      const node: TNode = {
+        id: nextId(graph, 'D'), x: p.x, y: p.y, type: 'door',
+        room, label: nextDoorLabel(graph, room),
+      };
+      commit({ ...graph, doors: [...graph.doors, node] }, `${node.label} placed`);
       return;
     }
 
@@ -317,7 +447,17 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     if (panning || evt.button === 1 || evt.button === 2 || evt.altKey) {
       evt.preventDefault();
       pan.current = { x: evt.clientX, y: evt.clientY, vx: view.x, vy: view.y };
+      return;
     }
+    // Select mode only. In corridor mode a drag starting on a node is ambiguous
+    // -- move it, or start a line from it? -- so dragging lives behind V.
+    if (mode !== 'select' || relinking) return;
+    const p = toImage(evt);
+    const hit = nodeAt(p, (view.w / 1000) * 12, true);
+    if (!hit) return;
+    evt.preventDefault();
+    drag.current = { id: hit.id, isDoor: graph.doors.some((d) => d.id === hit.id), before: graph, moved: false };
+    setSelected(hit.id);
   };
 
   /** Frame the whole floor plan. The way back when you've zoomed into nowhere. */
@@ -337,6 +477,8 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     });
   };
   const onMouseMove = (evt: React.MouseEvent) => {
+    if (drag.current) { dragTo(toImage(evt)); return; }
+
     // Read everything we need NOW, into plain locals.
     //
     // The updater passed to setView runs whenever React chooses, which can be
@@ -355,56 +497,98 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       return { ...v, x: start.vx - dx / scale, y: start.vy - dy / scale };
     });
   };
-  const endPan = () => { setTimeout(() => { pan.current = null; }, 0); };
+
+  /**
+   * Live node drag.
+   *
+   * A door is pinned to the nearest corridor line rather than following the
+   * cursor exactly: a small drag slides it along its hallway, a big one moves it
+   * to another. Letting a door float off the corridor would leave a route ending
+   * in mid-air. Drawn nodes follow the cursor freely.
+   */
+  const dragTo = (p: { x: number; y: number }) => {
+    const d = drag.current;
+    if (!d) return;
+    d.moved = true;
+
+    setGraph((g) => {
+      if (d.isDoor) {
+        const byId = new Map(g.nodes.map((n) => [n.id, n]));
+        let best: { x: number; y: number; dist: number } | null = null;
+        for (const e of g.edges) {
+          const a = byId.get(e.from), b = byId.get(e.to);
+          if (!a || !b) continue;
+          const proj = projectOntoSegment(p, a, b);
+          if (!best || proj.distance < best.dist) best = { ...proj.point, dist: proj.distance };
+        }
+        if (!best) return g;
+        const doors = g.doors.map((n) => (n.id === d.id ? { ...n, x: best!.x, y: best!.y } : n));
+        return rebuildDoorChains({ ...g, doors });
+      }
+      const nodes = g.nodes.map((n) => (n.id === d.id ? { ...n, x: p.x, y: p.y } : n));
+      return rebuildDoorChains({ ...g, nodes });
+    });
+  };
+
+  const endPan = () => {
+    const d = drag.current;
+    if (d) {
+      drag.current = null;
+      // Push ONE history entry for the whole gesture, not one per mouse-move.
+      if (d.moved) { setHistory((h) => [...h.slice(-49), d.before]); setStatus(`Moved ${d.id}`); }
+    }
+    setTimeout(() => { pan.current = null; }, 0);
+  };
 
   // --- auto-link ------------------------------------------------------------
+  /**
+   * Connect the doors you placed to the corridors you drew.
+   *
+   * This no longer invents doors. It used to guess a door's position by
+   * projecting the room's OCR label onto the nearest hallway, which put the door
+   * at the centre of the room's text rather than where the door actually is. Now
+   * you place the door where the plan shows it, and this only has to answer
+   * "which corridor does it open onto, and where along it".
+   *
+   * A door does not move -- the corridor is split at the point closest to it, so
+   * the door keeps the position you gave it and gains a connection.
+   */
   const doAutoLink = () => {
     if (!raw) return;
     const hallways = graph.edges.filter((e) => e.kind === 'hallway');
     if (!hallways.length) { setStatus('Draw some corridors first'); return; }
+    if (!graph.doors.length) { setStatus('Place some doors first — press D'); return; }
 
     const byId = new Map(graph.nodes.map((n) => [n.id, n]));
-    const segments: Segment[] = hallways.map((e) => ({
-      id: e.id,
-      a: byId.get(e.from)!,
-      b: byId.get(e.to)!,
-    }));
-
     const maxPx = 25 * raw.pixelsPerMetre;
-    const { links, unlinked } = autoLinkRooms(
-      raw.rooms.map((r) => ({ number: r.number, point: r.px })),
-      segments,
-      maxPx,
-    );
 
-    // Each door becomes a real node ON the corridor, which means splitting the
-    // segment it landed on. Sorting by t keeps the rebuilt chain in order.
-    // These arrays start EMPTY every run -- that is what makes re-running safe.
-    const doors: TNode[] = [];
-    const doorEdges: TEdge[] = [];
-    const roomDoor: Record<string, string> = {};
-    const bySeg = new Map<string, typeof links>();
-    for (const l of links) {
-      if (!bySeg.has(l.segmentId)) bySeg.set(l.segmentId, []);
-      bySeg.get(l.segmentId)!.push(l);
-    }
-
-    let seq = 0;
-    for (const seg of hallways) {
-      const on = (bySeg.get(seg.id) ?? []).sort((a, b) => a.t - b.t);
-      let prev = seg.from;
-      for (const l of on) {
-        const id = `D${String(++seq).padStart(3, '0')}`;
-        doors.push({ id, x: l.point.x, y: l.point.y, type: 'door' });
-        doorEdges.push({ id: `E${id}a`, from: prev, to: id, kind: 'hallway' });
-        roomDoor[l.roomNumber] = id;
-        prev = id;
+    let connected = 0;
+    const tooFar: string[] = [];
+    for (const d of graph.doors) {
+      let nearest = Infinity;
+      for (const e of hallways) {
+        const a = byId.get(e.from), b = byId.get(e.to);
+        if (!a || !b) continue;
+        nearest = Math.min(nearest, projectOntoSegment(d, a, b).distance);
       }
-      doorEdges.push({ id: `E${seg.id}z`, from: prev, to: seg.to, kind: 'hallway' });
+      if (nearest <= maxPx) connected++;
+      else tooFar.push(d.label ?? d.id);
     }
 
-    commit({ ...graph, doors, doorEdges, roomDoor },
-      `Linked ${links.length} rooms${unlinked.length ? `, ${unlinked.length} too far` : ''}`);
+    // rebuildDoorChains does the actual threading: for every corridor, walk it
+    // through the doors nearest to it, in order along the segment.
+    commit(rebuildDoorChains(graph),
+      `Connected ${connected} of ${graph.doors.length} doors` +
+      (tooFar.length ? ` — ${tooFar.length} too far from any corridor` : ''));
+  };
+
+  /** Wipe one category. Corridors take the door connections with them. */
+  const clearDoors = () => commit({ ...graph, doors: [], doorEdges: [] }, 'Cleared all doors');
+  const clearCorridors = () =>
+    commit({ ...graph, nodes: [], edges: [], doorEdges: [] }, 'Cleared all corridors');
+  const resetAll = () => {
+    if (!confirm('Clear every door and corridor on this floor? This cannot be undone except with ⌘Z.')) return;
+    commit(EMPTY, 'Reset');
   };
 
   // --- connectivity ---------------------------------------------------------
@@ -452,8 +636,7 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
 
     if (islands.groups.length > 1) {
       const stranded = islands.groups.slice(1);
-      const roomsOff = Object.entries(graph.roomDoor)
-        .filter(([, nodeId]) => (islands.of.get(nodeId) ?? 0) !== 0).length;
+      const roomsOff = graph.doors.filter((d) => (islands.of.get(d.id) ?? 0) !== 0).length;
       out.push({
         kind: 'split',
         detail: `Corridors are in ${islands.groups.length} disconnected pieces — ${roomsOff} rooms unreachable from the main network`,
@@ -468,9 +651,19 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       }
     }
 
-    const linked = new Set(Object.keys(graph.roomDoor));
+    const served = roomDoors(graph);
     for (const r of raw.rooms) {
-      if (!linked.has(r.number)) out.push({ kind: 'unlinked', detail: `${r.number} has no door`, room: r.number });
+      if (!served[r.number]) {
+        out.push({ kind: 'unlinked', detail: `${r.number} — no door placed`, room: r.number });
+      }
+    }
+    // A door typed against a room OCR never found. Allowed on purpose -- OCR
+    // missed rooms on both floors -- but worth surfacing in case it's a typo.
+    const known = new Set(raw.rooms.map((r) => r.number));
+    for (const d of graph.doors) {
+      if (d.room && !known.has(d.room)) {
+        out.push({ kind: 'unknown', detail: `${d.label} — "${d.room}" not in the OCR list`, nodeId: d.id });
+      }
     }
     const used = new Set(allEdges(graph).flatMap((e) => [e.from, e.to]));
     for (const n of allNodes(graph)) {
@@ -507,9 +700,15 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
         meters: +(Math.hypot(b.x - a.x, b.y - a.y) / ppm).toFixed(2), kind: e.kind,
       };
     });
-    const rooms = raw.rooms.filter((r) => graph.roomDoor[r.number]).map((r) => ({
-      number: r.number, type: r.type, floor: raw.floor,
-      doorNodeId: `W${raw.floor}-${graph.roomDoor[r.number]}`,
+    // A room can have several doors, so the app gets all of them and lets the
+    // router pick whichever gives the shorter route.
+    const served = roomDoors(graph);
+    const known = new Map(raw.rooms.map((r) => [r.number, r]));
+    const rooms = Object.entries(served).map(([number, doorIds]) => ({
+      number,
+      type: known.get(number)?.type ?? 'UNKNOWN',
+      floor: raw.floor,
+      doorNodeIds: doorIds.map((id) => `W${raw.floor}-${id}`),
     }));
 
     const res = await fetch('/api/tracer', {
@@ -527,7 +726,7 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
   const byId = new Map(allNodes(graph).map((n) => [n.id, n]));
   const drawnEdges = allEdges(graph);
   const drawnNodes = allNodes(graph);
-  const doorOf = new Map(Object.entries(graph.roomDoor).map(([room, node]) => [node, room]));
+  const served = roomDoors(graph);
   const r = view.w / 1000;
 
   return (
@@ -539,6 +738,7 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
         canUndo={history.length > 0} status={status}
         onZoomIn={() => zoomBy(1 / 1.4)} onZoomOut={() => zoomBy(1.4)} onFit={fitView}
         zoomPct={Math.round((raw.image.width / view.w) * 100)}
+        onClearDoors={clearDoors} onClearCorridors={clearCorridors} onReset={resetAll}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -557,7 +757,7 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
 
           {raw.rooms.map((room) => (
             <circle key={room.number} cx={room.px.x} cy={room.px.y} r={3.5 * r}
-              className={graph.roomDoor[room.number] ? 'fill-emerald-500/60' : 'fill-red-500/70'} />
+              className={served[room.number] ? 'fill-emerald-500/60' : 'fill-red-500/70'} />
           ))}
 
           {/* Anything not on the main island is drawn in red. Two corridors can
@@ -572,7 +772,7 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
           })}
 
           {drawnNodes.map((n) => {
-            const room = doorOf.get(n.id);
+            const room = n.label;
             const isRun = n.id === runFrom;
             const off = (islands.of.get(n.id) ?? 0) !== 0;
             const fill = n.type === 'door' ? 'fill-white'
@@ -620,9 +820,10 @@ function Toolbar(p: {
   onAutoLink: () => void; onUndo: () => void; onSave: () => void;
   canUndo: boolean; status: string;
   onZoomIn: () => void; onZoomOut: () => void; onFit: () => void; zoomPct: number;
+  onClearDoors: () => void; onClearCorridors: () => void; onReset: () => void;
 }) {
   const modes: [Mode, string][] = [
-    ['corridor', 'Corridor  C'], ['pan', 'Pan  H'], ['stair', 'Stair  S'],
+    ['corridor', 'Corridor  C'], ['door', 'Door  D'], ['pan', 'Pan  H'], ['stair', 'Stair  S'],
     ['elevator', 'Lift  E'], ['entrance', 'Entrance  N'], ['select', 'Select  V'],
   ];
   return (
@@ -655,6 +856,19 @@ function Toolbar(p: {
         className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white hover:bg-neutral-700">
         Save
       </button>
+      <div className="mx-2 h-5 w-px bg-neutral-300" />
+      <button onClick={p.onClearDoors} title="Remove every door on this floor"
+        className="rounded border border-neutral-300 px-2.5 py-1.5 text-xs text-neutral-600 hover:bg-neutral-100">
+        Clear doors
+      </button>
+      <button onClick={p.onClearCorridors} title="Remove every corridor on this floor"
+        className="rounded border border-neutral-300 px-2.5 py-1.5 text-xs text-neutral-600 hover:bg-neutral-100">
+        Clear corridors
+      </button>
+      <button onClick={p.onReset} title="Remove everything on this floor"
+        className="rounded border border-red-300 px-2.5 py-1.5 text-xs text-red-700 hover:bg-red-50">
+        Reset
+      </button>
       <span className="ml-3 text-sm text-neutral-500">{p.building} · level {p.floor}</span>
       <span className="ml-auto text-sm text-emerald-700">{p.status}</span>
     </div>
@@ -668,7 +882,7 @@ function SidePanel(p: {
   onRelink: (room: string | null) => void; onFocusRoom: (room: string) => void;
   onFocusNode: (id: string) => void;
 }) {
-  const linked = Object.keys(p.graph.roomDoor).length;
+  const linked = new Set(p.graph.doors.map((d) => d.room).filter(Boolean)).size;
   return (
     <aside className="w-80 shrink-0 overflow-y-auto border-l border-neutral-300 bg-white p-3 text-sm">
       <div className="mb-3 grid grid-cols-2 gap-2">
@@ -716,8 +930,13 @@ function SidePanel(p: {
       <ul className="space-y-0.5 text-xs text-neutral-600">
         <li>click — place a corridor point</li>
         <li>click an existing point — join to it</li>
+        <li>click on a corridor line — join to it</li>
         <li>Esc — end the current run</li>
-        <li><b>hold Space + drag — pan</b> (works in any mode)</li>
+        <li className="pt-1"><b>V — select mode</b></li>
+        <li>&nbsp;&nbsp;drag a node — move it</li>
+        <li>&nbsp;&nbsp;drag a door — slide it along the corridor</li>
+        <li>&nbsp;&nbsp;Backspace — delete the selected node</li>
+        <li className="pt-1"><b>hold Space + drag — pan</b> (any mode)</li>
         <li><b>H</b> — pan mode, then plain drag</li>
         <li>scroll — zoom · <b>Fit</b> — see the whole plan again</li>
         <li>⌘Z — undo</li>

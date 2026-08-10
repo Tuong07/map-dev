@@ -72,6 +72,10 @@ function project(p: N, a: N, b: N) {
 }
 
 let seq = nodes.filter((n) => n.id.startsWith('J')).length;
+// Separate counter. Sharing `seq` with the node ids meant a join that did not
+// split an edge left it unincremented, so the next join reused the same edge id
+// -- two edges called EJ010, which React then rejects as a duplicate key.
+let joinSeq = edges.filter((e) => e.id.startsWith('EJ')).length;
 const joins: { from: string; onto: string; metres: number; split: boolean }[] = [];
 
 for (let pass = 0; pass < 200; pass++) {
@@ -115,7 +119,7 @@ for (let pass = 0; pass < 200; pass++) {
   }
 
   if (targetId !== best.node.id) {
-    edges.push({ id: `EJ${String(seq).padStart(3, '0')}`, from: best.node.id, to: targetId, kind: 'hallway' });
+    edges.push({ id: `EJ${String(++joinSeq).padStart(3, '0')}`, from: best.node.id, to: targetId, kind: 'hallway' });
   }
   joins.push({ from: best.node.id, onto: targetId, metres: best.d / ppm, split: didSplit });
 }
