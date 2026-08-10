@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { autoLinkRooms, projectOntoSegment, type Segment } from '@/lib/core/autolink';
 
-type Mode = 'corridor' | 'stair' | 'elevator' | 'entrance' | 'select';
+type Mode = 'corridor' | 'stair' | 'elevator' | 'entrance' | 'select' | 'pan';
 
 type TNode = {
   id: string;
@@ -116,6 +116,7 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
   const [relinking, setRelinking] = useState<string | null>(null);
   const [status, setStatus] = useState('');
   const [view, setView] = useState({ x: 0, y: 0, w: 5100, h: 3300 });
+  const [spaceHeld, setSpaceHeld] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const pan = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
 
@@ -163,11 +164,25 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
       if (e.key === 'Escape') { setRunFrom(null); setSelected(null); setRelinking(null); return; }
       if (e.target instanceof HTMLInputElement) return;
-      const keys: Record<string, Mode> = { c: 'corridor', s: 'stair', e: 'elevator', n: 'entrance', v: 'select' };
+      // Hold space to pan without leaving the drawing mode -- the convention in
+      // every design tool, and it means you never lose your place mid-corridor.
+      if (e.code === 'Space') { e.preventDefault(); setSpaceHeld(true); return; }
+      const keys: Record<string, Mode> = {
+        c: 'corridor', s: 'stair', e: 'elevator', n: 'entrance', v: 'select', h: 'pan',
+      };
       if (keys[e.key]) { setMode(keys[e.key]); setRunFrom(null); }
     };
+    const onKeyUp = (e: KeyboardEvent) => { if (e.code === 'Space') setSpaceHeld(false); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKeyUp);
+    // A dropped keyup (tab away mid-drag) would leave panning stuck on forever.
+    const onBlur = () => setSpaceHeld(false);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+    };
   }, [undo]);
 
   // --- coordinate helpers ---------------------------------------------------
@@ -255,11 +270,30 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
     setView({ x: p.x - (p.x - view.x) * (w / view.w), y: p.y - (p.y - view.y) * (h / view.h), w, h });
   };
 
+  const panning = mode === 'pan' || spaceHeld;
+
   const onMouseDown = (evt: React.MouseEvent) => {
-    if (evt.button === 1 || evt.button === 2 || evt.altKey) {
+    if (panning || evt.button === 1 || evt.button === 2 || evt.altKey) {
       evt.preventDefault();
       pan.current = { x: evt.clientX, y: evt.clientY, vx: view.x, vy: view.y };
     }
+  };
+
+  /** Frame the whole floor plan. The way back when you've zoomed into nowhere. */
+  const fitView = useCallback(() => {
+    if (raw) setView({ x: 0, y: 0, w: raw.image.width, h: raw.image.height });
+  }, [raw]);
+
+  /** Zoom about the centre of the view, for the toolbar buttons. */
+  const zoomBy = (factor: number) => {
+    if (!raw) return;
+    const w = Math.min(raw.image.width * 1.5, Math.max(300, view.w * factor));
+    const h = w * (view.h / view.w);
+    setView({
+      x: view.x + (view.w - w) / 2,
+      y: view.y + (view.h - h) / 2,
+      w, h,
+    });
   };
   const onMouseMove = (evt: React.MouseEvent) => {
     if (!pan.current || !svgRef.current) return;
@@ -399,13 +433,17 @@ export default function TracerCanvas({ building, floor }: { building: string; fl
         building={building} floor={raw.floor}
         onAutoLink={doAutoLink} onUndo={undo} onSave={save}
         canUndo={history.length > 0} status={status}
+        onZoomIn={() => zoomBy(1 / 1.4)} onZoomOut={() => zoomBy(1.4)} onFit={fitView}
+        zoomPct={Math.round((raw.image.width / view.w) * 100)}
       />
 
       <div className="flex min-h-0 flex-1">
         <svg
           ref={svgRef}
           viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-          className="flex-1 bg-white cursor-crosshair"
+          className={`flex-1 bg-white ${panning
+            ? (pan.current ? 'cursor-grabbing' : 'cursor-grab')
+            : 'cursor-crosshair'}`}
           onClick={onClick} onWheel={onWheel}
           onMouseDown={onMouseDown} onMouseMove={onMouseMove}
           onMouseUp={endPan} onMouseLeave={endPan}
@@ -466,10 +504,11 @@ function Toolbar(p: {
   mode: Mode; setMode: (m: Mode) => void; building: string; floor: number;
   onAutoLink: () => void; onUndo: () => void; onSave: () => void;
   canUndo: boolean; status: string;
+  onZoomIn: () => void; onZoomOut: () => void; onFit: () => void; zoomPct: number;
 }) {
   const modes: [Mode, string][] = [
-    ['corridor', 'Corridor  C'], ['stair', 'Stair  S'], ['elevator', 'Lift  E'],
-    ['entrance', 'Entrance  N'], ['select', 'Select  V'],
+    ['corridor', 'Corridor  C'], ['pan', 'Pan  H'], ['stair', 'Stair  S'],
+    ['elevator', 'Lift  E'], ['entrance', 'Entrance  N'], ['select', 'Select  V'],
   ];
   return (
     <div className="flex items-center gap-2 border-b border-neutral-300 bg-white px-3 py-2">
@@ -480,6 +519,14 @@ function Toolbar(p: {
           {label}
         </button>
       ))}
+      <div className="mx-2 h-5 w-px bg-neutral-300" />
+      <button onClick={p.onZoomOut} title="Zoom out"
+        className="rounded border border-neutral-300 px-2.5 py-1.5 text-sm hover:bg-neutral-100">−</button>
+      <span className="w-12 text-center text-xs tabular-nums text-neutral-500">{p.zoomPct}%</span>
+      <button onClick={p.onZoomIn} title="Zoom in"
+        className="rounded border border-neutral-300 px-2.5 py-1.5 text-sm hover:bg-neutral-100">+</button>
+      <button onClick={p.onFit} title="Fit the whole floor plan"
+        className="rounded border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100">Fit</button>
       <div className="mx-2 h-5 w-px bg-neutral-300" />
       <button onClick={p.onAutoLink}
         className="rounded bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700">
@@ -550,8 +597,9 @@ function SidePanel(p: {
         <li>click — place a corridor point</li>
         <li>click an existing point — join to it</li>
         <li>Esc — end the current run</li>
-        <li>alt-drag or right-drag — pan</li>
-        <li>scroll — zoom</li>
+        <li><b>hold Space + drag — pan</b> (works in any mode)</li>
+        <li><b>H</b> — pan mode, then plain drag</li>
+        <li>scroll — zoom · <b>Fit</b> — see the whole plan again</li>
         <li>⌘Z — undo</li>
       </ul>
     </aside>
