@@ -1,12 +1,38 @@
-# map-dev
+# map-dev — Indoor Navigation for UMass Boston
 
-Indoor navigation for UMass Boston — Google Maps, but for the inside of buildings.
+Google Maps, but for the inside of buildings. Search a room number, get a route
+through the building with turn-by-turn directions. Built for Wheatley Hall, a
+building most students describe as a maze.
 
-Search a room number, get a route through the building with turn-by-turn
-directions. Built for Wheatley Hall, a building most students describe as a maze.
+## Tech Stack
 
-**Stack:** Next.js · TypeScript · Tailwind · SVG rendering · deployed on Vercel
-**No backend, no database** — see [why](docs/ARCHITECTURE.md).
+- **Framework:** Next.js (App Router), TypeScript
+- **Styling:** Tailwind CSS
+- **Rendering:** Hand-rolled SVG — no mapping library
+- **Pathfinding:** Hand-written A\* over a corridor graph — no routing library
+- **Data:** JSON in the repo — [no backend, no database](docs/ARCHITECTURE.md)
+- **OCR:** Apple Vision framework via Swift — no dependency, no API cost
+- **Testing:** Vitest — 22 tests on pathfinding and geometry
+- **Deployment:** Vercel
+
+## Implemented Features
+
+- **Room Search** — type a room number, fuzzy-matched (`1-053`, `1 053`, `1053` all work)
+- **Floor Map** — the real architectural floor plan, rooms highlighted, pan and zoom
+- **Routing** — A\* across **6,320 room pairs at 100% coverage**, 0.011 ms per route
+- **Turn-by-Turn Directions** — generated from corridor geometry, not hand-written
+- **Multi-Floor Routing** — stairs and lifts, with a step-free routing toggle
+- **Map Authoring Tool** (`/tracer`) — draw corridors on a floor plan, doors auto-link
+  to the nearest room, disconnected-network detection. Works on any building
+- **OCR Data Pipeline** — **210 rooms** extracted from architectural PDFs with zero typing
+- **Sensor Test Harness** (`probes/`) — record-and-replay analyzer for tuning phone
+  positioning offline
+
+## In Progress
+
+- **Live Position Tracking** — components validated on hardware, end-to-end test pending
+- **Level 2 Corridors** — rooms extracted, corridors not yet traced
+- **AR Wayfinding** — [designed](docs/AR.md), not built
 
 ---
 
@@ -278,15 +304,3 @@ addition.
 | [OBSERVATIONS.md](docs/OBSERVATIONS.md) | **Every measured result in the project** |
 | [AR.md](docs/AR.md) | AR design, and why it needs no library |
 | [ROADMAP.md](docs/ROADMAP.md) | What's done, what's next |
-
----
-
-## Status
-
-Working: room search, floor map, A\* routing across 6,320 room pairs at 100%
-coverage, turn-by-turn directions, multi-floor routing with stairs and lifts,
-step-free routing toggle.
-
-In progress: Level 2 corridors (rooms extracted, corridors not traced), live
-position tracking (components validated, end-to-end test pending), AR (designed,
-not built).
